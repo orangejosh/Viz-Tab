@@ -1,0 +1,35 @@
+{
+	"name": "Mini Tabs",
+	"description": "Customize new tabs",
+	"version": "1.0.0",
+	"manifest_version": 2,
+	
+	"permissions": [
+		"<all_urls>",
+		"tabs", 
+		"storage", 
+		"activeTab",
+		"unlimitedStorage"
+	],
+  	
+  	"browser_action": {
+    	"default_icon": "tabButton.png",
+    	"default_popup": "popup.html"
+  	},
+
+	"chrome_url_overrides": {
+		"newtab" : "newTab.html"
+	},
+
+	"background": {
+		"scripts": ["background.js"],
+		"persistent": false
+	},
+
+	"content_scripts": [{
+		"matches": ["http://*/*", "https://*/*"],
+		"js": ["scrollScript.js"]
+	}]
+	
+
+}
