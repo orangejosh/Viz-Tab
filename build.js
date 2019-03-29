@@ -487,18 +487,7 @@ function setImageDims(image, preview) {
 	var i = new Image();
 	i.src = image.src;
 	i.onload = function(){
-		if (i.height / i.width > 0.52){
-			image.style.width = '100%'
-		} else {
-			image.style.height = '100%'
-			var blockWidth = preview.offsetWidth;
-			var blockHeight = preview.offsetHeight;
-			var ratio = blockHeight / i.height;
-			var imgWidth = i.width * ratio;
-
-			var overflow = imgWidth - blockWidth;
-			image.style.marginLeft = -overflow / 2;
-		}
+		image.style.width = '100%';
 	}
 }
 
