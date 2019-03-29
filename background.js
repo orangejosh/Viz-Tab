@@ -10,6 +10,19 @@ chrome.runtime.onMessage.addListener(
 	}
 )
 
+chrome.tabs.onCreated.addListener(function(tab) {
+	if (tab.url === "chrome://newtab/"){
+		chrome.storage.local.get('newTab', function(data){
+			var newTabOn = data.newTab === undefined || data.newTab === false ? false : true
+			if (newTabOn){
+				chrome.tabs.update(tab.id, {
+					url: chrome.extension.getURL("newTab.html")
+				})
+			}
+		})
+	}
+})
+
 function setGroup(name, oneTab){
 	chrome.storage.local.get('groupList', function(list){
 		if (list.groupList === undefined){

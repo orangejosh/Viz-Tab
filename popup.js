@@ -11,6 +11,12 @@ function init() {
 		addListeners();
 		createGroupList();
 	})
+
+	chrome.storage.local.get('newTab', function(data){
+		var newTabOn = data.newTab === undefined || data.newTab === false ? false : true;
+		var newTab = document.getElementById('newTab');
+		newTab.checked = newTabOn;			
+	})
 }
 
 function addListeners(){
@@ -19,12 +25,14 @@ function addListeners(){
 	var groupName = document.getElementById('groupName');
 	var toggle = document.getElementById('tabSwitch');
 	var open = document.getElementById('openButton');
+	var newTab = document.getElementById('newTab');
 
 	save.addEventListener('click', saveTabs, false);
 	groupList.addEventListener('change', checkForGroupList, false);
 	groupName.addEventListener('keypress', checkKeyPress, false);
 	toggle.addEventListener('change', toggleSwitch, false);
 	open.addEventListener('click', openNewTab, false);
+	newTab.addEventListener('change', toggleNewTab, false);
 }
 
 function createGroupList(){
@@ -134,6 +142,15 @@ function toggleSwitch(){
 		chrome.storage.local.set({'toggle': true});
 	}
 	toggle.style.backgroundSize = '100% auto';
+}
+
+function toggleNewTab(){
+	var box = document.getElementById('newTab');
+	if (box.checked) {
+		chrome.storage.local.set({'newTab': true});
+	} else {
+		chrome.storage.local.set({'newTab': false});
+	}
 }
 
 function openNewTab() {
