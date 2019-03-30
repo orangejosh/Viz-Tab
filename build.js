@@ -22,6 +22,7 @@ function init() {
 		buildPages(list);
 		checkAllTabs(list);
 
+		/*
 		var button = document.createElement('button');
 		button.addEventListener('click', function(){
 			chrome.storage.local.get(null, function(data){
@@ -29,6 +30,7 @@ function init() {
 			})
 		})
 		document.body.appendChild(button);
+		*/
 	});
 }
 
