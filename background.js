@@ -299,7 +299,7 @@ function sendRedraw(){
 	chrome.windows.getAll({populate:true}, function(windows){
 		windows.forEach(function(aWindow){
 			aWindow.tabs.forEach(function(tab){
-				if (tab.url.substr(0,15) === 'chrome://newtab'){
+				if (tab.url.includes('newTab.html')){
 					chrome.tabs.sendMessage(tab.id, {page: 'redraw'});
 				}	
 			})
