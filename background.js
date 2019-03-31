@@ -259,7 +259,7 @@ function captureAllTabs (index, activeGroup, tabList, imgList, list, lostImg){
 
 
 function checkForDuplicates(pageList, url){
-	if (url.substring(0,9) == 'chrome://'){
+	if (url.substring(0,9) == 'chrome://' || url.substring(0,19) == 'chrome-extension://'){
 		return true;
 	}
 
