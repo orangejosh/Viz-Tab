@@ -7,4 +7,5 @@ Ideal for users who need several tabs open based on a specific project or intere
 Viz Tab can also be set as the default home page that opens whenever a new tab is opened. Categories and pages can quickly be renamed to make organizing even easier.
 
 ![](images/PhotoShop/ScreenShot1.png)
+![](images/PhotoShop/ScreenShot2.png)
 
