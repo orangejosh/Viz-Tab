@@ -273,26 +273,24 @@ function checkForDuplicates(pageList, url){
 	return false;
 }
 
+/*
+* Scales the screen shot to the appropriate thumbnail size
+*/
 function scaleImage(image){
-	var canvas = drawImgToCanvas(image);
-
-	while(canvas.width * 0.5 > 240 && canvas.height * 0.5 > 135){
-		canvas = drawImgToCanvas(canvas);
-	}
-
-	return canvas.toDataURL('image/jpeg', 0.9);
-}
-
-function drawImgToCanvas(image){
 	var canvas = document.createElement('canvas');
 	var context = canvas.getContext('2d');
-
-	canvas.width = image.width * 0.5;
-	canvas.height = image.height * 0.5;
+	var ratio = image.width / image.height;
+	
+	if (ratio > 1.8){
+		canvas.width = 240;
+		canvas.height = canvas.width / ratio;
+	} else {
+		canvas.height = 135;
+		canvas.width = canvas.height * ratio;
+	}
 
 	context.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-	return canvas;
+	return canvas.toDataURL('image/jpeg', 0.9);
 }
 
 function sendRedraw(){
