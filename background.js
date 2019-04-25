@@ -1,14 +1,32 @@
 
-chrome.runtime.onMessage.addListener(
-	function(request, sender, sendResponse){
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
+	chrome.storage.local.get('groupList', function(list){
 		if (request.onePage !== undefined){
-			setGroup(request.onePage, true);
+			group = getExistingGroup(request.onePage, list);
+			isNew = group === null;
+
+			if (group === null){
+				group = getNewGroup(request.onePage, list);
+			}
+			
+			setActiveGroup(group, list);
+			storeOnePage(group, list, isNew);
 		} else if (request.allPages !== undefined){
-			setGroup(request.allPages, false);
+			group = getExistingGroup(request.allPages, list);
+			isNew = group === null;
+
+			if (group === null){
+				group = getNewGroup(request.allPages, list);
+			}
+
+			setActiveGroup(group, list);
+			chrome.tabs.query({currentWindow: true}, function(theTabs){
+				storeAllPages(group, 0, theTabs, list, isNew)
+			})
 		}
 		sendResponse({complete: 'true'});
-	}
-)
+	})
+})
 
 chrome.tabs.onCreated.addListener(function(tab) {
 	if (tab.url === "chrome://newtab/"){
@@ -23,33 +41,32 @@ chrome.tabs.onCreated.addListener(function(tab) {
 	}
 })
 
-function setGroup(name, oneTab){
-	chrome.storage.local.get('groupList', function(list){
-		if (list.groupList === undefined){
-			list.groupList = [];
-		}
+function getExistingGroup(name, list){
+	if (list.groupList === undefined){
+		list.groupList = [];
+	}
 
-		var grpList = list.groupList;
-
-		for (var i = 0; i < grpList.length; i++){
-			var aGroup = grpList[i];
-			if (name === aGroup.name){
-				setActiveGroup(aGroup, list, oneTab, false);
-				return;
-			}
+	for (var i = 0; i < list.groupList.length; i++){
+		var aGroup = list.groupList[i];
+		if (name === aGroup.name){
+			return aGroup;
 		}
-		aGroup = {
-			'id': (new Date()).getTime().toString(),
-			'name': name,
-			'active': true,
-			'pageList': []
-		}
-		list.groupList.push(aGroup);
-		setActiveGroup(aGroup, list, oneTab, true);
-	})
+	}
+	return null;
 }
 
-function setActiveGroup(group, list, oneTab, newGroup){
+function getNewGroup(name, list){
+	aGroup = {
+		'id': (new Date()).getTime().toString(),
+		'name': name,
+		'active': true,
+		'pageList': []
+	}
+	list.groupList.push(aGroup);
+	return aGroup;
+}
+
+function setActiveGroup(group, list){
 	for (var i = 0; i < list.groupList.length; i++){
 		var aGroup = list.groupList[i];
 		if (aGroup === group){
@@ -58,14 +75,8 @@ function setActiveGroup(group, list, oneTab, newGroup){
 			aGroup.active = false;
 		}
 	}
-	if (oneTab === true){
-		storeOnePage(group, list, newGroup);
-	} else {
-		chrome.tabs.query({currentWindow: true}, function(theTabs){
-			storeAllPages(group, 0, theTabs, list, newGroup)
-		})
-	}
 }
+	
 
 /***************STORE ONE PAGE START****************/
 
@@ -151,7 +162,7 @@ function captureTabImage(imgObj, activeGroup, imgList, list, newGroup) {
 
 
 
-/***************STORE ALL PAGE START****************/
+/***************STORE ALL PAGES START****************/
 
 var activeTab;
 
@@ -255,7 +266,7 @@ function captureAllTabs (index, activeGroup, tabList, imgList, list, lostImg){
 		}
 	});	
 }
-/***************STORE ALL PAGE END****************/
+/***************STORE ALL PAGES END****************/
 
 
 function checkForDuplicates(pageList, url){
@@ -293,6 +304,9 @@ function scaleImage(image){
 	return canvas.toDataURL('image/jpeg', 0.9);
 }
 
+/*
+* Redraws the tabs page with new content
+*/
 function sendRedraw(){
 	chrome.windows.getAll({populate:true}, function(windows){
 		windows.forEach(function(aWindow){
@@ -315,6 +329,9 @@ function createLostImage(action, id, newGroup, imgData){
 	return imgObj;
 }
 
+/*
+* Stores a snapshot of the current values for undo and redo
+*/
 function takeSnapShot(list, lostImg){
 	chrome.storage.local.get('undoObj', function(data){
 		var undoObj = data.undoObj === undefined ? {'index': 0, 'list': []} : data.undoObj;

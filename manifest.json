@@ -1,7 +1,7 @@
 {
 	"name": "Viz Tab",
 	"description": "Save a visual log of open tabs.",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"manifest_version": 2,
 	
 	"permissions": [
