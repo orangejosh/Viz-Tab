@@ -24,14 +24,14 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
 				storeAllPages(group, 0, theTabs, list, isNew)
 			})
 		}
-		sendResponse({complete: 'true'});
 	})
+	sendResponse({complete: 'true'});
 })
 
 chrome.tabs.onCreated.addListener(function(tab) {
 	if (tab.url === "chrome://newtab/"){
 		chrome.storage.local.get('newTab', function(data){
-			var newTabOn = data.newTab === undefined || data.newTab === false ? false : true
+			var newTabOn = data.newTab !== undefined && data.newTab === true;
 			if (newTabOn){
 				chrome.tabs.update(tab.id, {
 					url: chrome.extension.getURL("newTab.html")
@@ -86,6 +86,15 @@ function storeOnePage(activeGroup, list, newGroup) {
 			getImageGroup(activeGroup, tabs[0].url, list, newGroup);
 			return;
 		}
+		var aPage = {
+			'groupID': activeGroup.id,
+			'url': tabs[0].url,
+			'title': tabs[0].title,
+			'scroll': 0 
+		}
+		activeGroup.pageList.push(aPage);
+		getImageGroup(activeGroup, aPage.url, list, newGroup);
+/*
 		chrome.tabs.sendMessage(tabs[0].id, {page: 'getScroll'}, function(response){
 			var scroll = response === undefined ? 0 : response.scroll;
 			var aPage = {
@@ -97,6 +106,7 @@ function storeOnePage(activeGroup, list, newGroup) {
 			activeGroup.pageList.push(aPage);
 			getImageGroup(activeGroup, aPage.url, list, newGroup);
 		});
+*/
 	})
 }
 
@@ -192,7 +202,14 @@ function storeAllPages(activeGroup, index, tabs, list, newGroup){
 		storeAllPages(activeGroup, index, tabs, list, newGroup);
 		return;
 	}
-
+	var data = {
+		'url': tab.url,
+		'title': tab.title,
+		'scroll': 0 
+	}
+	activeGroup.pageList.push(data);
+	storeAllPages(activeGroup, index++, tabs, list, newGroup);
+/*
 	chrome.tabs.sendMessage(tab.id, {page: 'getScroll'}, function(response){
 		var scroll = response === undefined ? 0 : response.scroll;
 		var data = {
@@ -203,6 +220,7 @@ function storeAllPages(activeGroup, index, tabs, list, newGroup){
 		activeGroup.pageList.push(data);
 		storeAllPages(activeGroup, index++, tabs, list, newGroup);
 	})
+*/
 }
 
 function storeAllImages(index, activeGroup, tabList, imgList, list, lostImg){
