@@ -2,9 +2,9 @@
 main();
 
 function main(){
-	// Add listeners that recieve messages from popup.js  to save one or all pages.
+	// Add groupListeners that recieve messages from popup.js  to save one or all pages.
 	chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
-		chrome.storage.local.get('groupList', function(list){
+		chrome.storage.local.get('groups', function(list){
 			if (request.onePage !== undefined){
 				group = getExistingGroup(request.onePage, list);
 				isNew = group === null;
@@ -48,12 +48,12 @@ function main(){
 
 
 function getExistingGroup(name, list){
-	if (list.groupList === undefined){
-		list.groupList = [];
+	if (list.groups === undefined){
+		list.groups = [];
 	}
 
-	for (var i = 0; i < list.groupList.length; i++){
-		var aGroup = list.groupList[i];
+	for (var i = 0; i < list.groups.length; i++){
+		var aGroup = list.groups[i];
 		if (name === aGroup.name){
 			return aGroup;
 		}
@@ -68,13 +68,13 @@ function getNewGroup(name, list){
 		'active': true,
 		'pageList': []
 	}
-	list.groupList.push(aGroup);
+	list.groups.push(aGroup);
 	return aGroup;
 }
 
 function setActiveGroup(group, list){
-	for (var i = 0; i < list.groupList.length; i++){
-		var aGroup = list.groupList[i];
+	for (var i = 0; i < list.groups.length; i++){
+		var aGroup = list.groups[i];
 		if (aGroup === group){
 			aGroup.active = true;
 		} else {
@@ -88,89 +88,57 @@ function setActiveGroup(group, list){
 
 function storeOnePage(activeGroup, list, newGroup) {
 	chrome.tabs.query({active:true, currentWindow: true}, function(tabs){
-		if (checkForDuplicates(activeGroup.pageList, tabs[0].url)){
-			getImageGroup(activeGroup, tabs[0].url, list, newGroup);
-			return;
-		}
-		var aPage = {
-			'groupID': activeGroup.id,
-			'url': tabs[0].url,
-			'title': tabs[0].title,
-			'scroll': 0 
-		}
-		activeGroup.pageList.push(aPage);
-		getImageGroup(activeGroup, aPage.url, list, newGroup);
-/*
-		chrome.tabs.sendMessage(tabs[0].id, {page: 'getScroll'}, function(response){
-			var scroll = response === undefined ? 0 : response.scroll;
-			var aPage = {
+		page = getPage(activeGroup, tabs[0].url);
+
+		if (page !== null){
+			if (url.substring(0,9) == 'chrome://' || url.substring(0,19) == 'chrome-extension://'){
+				return;
+			} else if (page.img === '/images/missingImg.jpg'){
+				page.img = undefined;
+			}
+		} else {
+			page = {
 				'groupID': activeGroup.id,
 				'url': tabs[0].url,
 				'title': tabs[0].title,
-				'scroll': scroll
+				'scroll': 0,
+				'img': undefined
 			}
-			activeGroup.pageList.push(aPage);
-			getImageGroup(activeGroup, aPage.url, list, newGroup);
-		});
-*/
+			activeGroup.pageList.push(page);
+		}
+
+		capturePage(activeGroup, page, list, newGroup);
 	})
 }
 
-function getImageGroup(activeGroup, url, list, newGroup){
-	chrome.storage.local.get(activeGroup.id, function(imgList){
-		if (imgList[activeGroup.id] === undefined){
-			imgList[activeGroup.id] = [];
+function getPage(activeGroup, url){
+	for (var i = 0; i < activeGroup.pageList.length; i++){
+		if (activeGroup.pageList[i].url === url){
+			return activeGroup.pageList[i];
 		}
-
-		var storedList = imgList[activeGroup.id];
-		for (var i = 0; i < storedList.length; i++){
-			var imgObj = storedList[i];
-			if (imgObj.url === url){
-				if (imgObj.img === '/images/missingImg.jpg'){
-					storedList.splice(i, 1);
-					captureOneTab(activeGroup, url, imgList, list, newGroup)
-					return;
-				} else {
-					return;
-				}
-			}
-		}
-		captureOneTab(activeGroup, url, imgList, list, newGroup);
-	})
+	}
+	return null;
 }
 
-function captureOneTab(activeGroup, url, imgList, list, newGroup){
+function capturePage(activeGroup, page, list, newGroup){
 	chrome.tabs.captureVisibleTab(chrome.windows.WINDOW_ID_CURRENT, {}, function(img){
-		if (chrome.extension.lastError){
-			var imgObj = {'url': url, 'img': '/images/missingImg.jpeg'};
-			captureTabImage(imgObj, activeGroup, imgList, list, newGroup);
-			return;
-		}
 		var image = new Image();
 		image.src = img;
 
 		image.onload = function() {
-			var newImg = scaleImage(image);
-			var imgObj = {'url': url, 'img': newImg};
-			captureTabImage(imgObj, activeGroup, imgList, list, newGroup);
+			page.img = scaleImage(image);
+			chrome.storage.local.set({'groups': list.groups}, function() {
+				sendRedraw();
+				var lostImg = createLostImage(
+					'add',
+					activeGroup.id,
+					newGroup,
+					[{'img': image, 'url': page.url}]
+				)
+				takeSnapShot(list,lostImg);
+			});
 		}
-	})	
-}
-
-function captureTabImage(imgObj, activeGroup, imgList, list, newGroup) {
-	imgList[activeGroup.id].push(imgObj);
-	chrome.storage.local.set(imgList, function(){
-		chrome.storage.local.set(list, function(){
-			sendRedraw();
-			var lostImg = createLostImage(
-				'add',
-				activeGroup.id,
-				newGroup,
-				[{'img': imgObj.img, 'url': imgObj.url}]
-			)
-			takeSnapShot(list,lostImg);
-		});
-	});	
+	})
 }
 
 /***************STORE ONE PAGE END****************/
@@ -182,7 +150,7 @@ function captureTabImage(imgObj, activeGroup, imgList, list, newGroup) {
 
 var activeTab;
 
-function storeAllPages(activeGroup, index, tabs, list, newGroup){
+function storeAllPages(activeGroup, index, tabs, groupList, newGroup){
 	if (index === tabs.length){
 		chrome.storage.local.get(activeGroup.id, function(imgList){
 			if (imgList[activeGroup.id] === undefined){
@@ -194,7 +162,7 @@ function storeAllPages(activeGroup, index, tabs, list, newGroup){
 				newGroup,
 				[]
 			)
-			storeAllImages(0, activeGroup, tabs, imgList, list, lostImg);
+			storeAllImages(0, activeGroup, tabs, imgList, groupList, lostImg);
 		})
 		return;
 	}
@@ -205,7 +173,7 @@ function storeAllPages(activeGroup, index, tabs, list, newGroup){
 	}
 	if (checkForDuplicates(activeGroup.pageList, tab.url)){
 		index++;
-		storeAllPages(activeGroup, index, tabs, list, newGroup);
+		storeAllPages(activeGroup, index, tabs, groupList, newGroup);
 		return;
 	}
 	var data = {
@@ -214,7 +182,7 @@ function storeAllPages(activeGroup, index, tabs, list, newGroup){
 		'scroll': 0 
 	}
 	activeGroup.pageList.push(data);
-	storeAllPages(activeGroup, index++, tabs, list, newGroup);
+	storeAllPages(activeGroup, index++, tabs, groupList, newGroup);
 /*
 	chrome.tabs.sendMessage(tab.id, {page: 'getScroll'}, function(response){
 		var scroll = response === undefined ? 0 : response.scroll;
@@ -224,20 +192,20 @@ function storeAllPages(activeGroup, index, tabs, list, newGroup){
 			'scroll': scroll
 		}
 		activeGroup.pageList.push(data);
-		storeAllPages(activeGroup, index++, tabs, list, newGroup);
+		storeAllPages(activeGroup, index++, tabs, groupList, newGroup);
 	})
 */
 }
 
-function storeAllImages(index, activeGroup, tabList, imgList, list, lostImg){
+function storeAllImages(index, activeGroup, tabList, imgList, groupList, lostImg){
 	if (index >= tabList.length){
 		if (activeTab !== undefined){
 			chrome.tabs.update(activeTab.id, {active: true});
 		}
 		chrome.storage.local.set(imgList, function(){
-			chrome.storage.local.set(list, function(){
+			chrome.storage.local.set(groupList, function(){
 				sendRedraw();
-				takeSnapShot(list, lostImg);
+				takeSnapShot(groupList, lostImg);
 			})
 		})
 		return;
@@ -246,7 +214,7 @@ function storeAllImages(index, activeGroup, tabList, imgList, list, lostImg){
 	var tab = tabList[index];
 	chrome.tabs.update(tab.id, {active:true}, function(){
 		if (tab.url.substring(0,9) === 'chrome://'){
-			storeAllImages(index+1, activeGroup, tabList, imgList, list, lostImg);
+			storeAllImages(index+1, activeGroup, tabList, imgList, groupList, lostImg);
 			return;
 		}
 
@@ -256,26 +224,26 @@ function storeAllImages(index, activeGroup, tabList, imgList, list, lostImg){
 			if (imgObj.url === tab.url){
 				if (imgObj.img === '/images/missingImg.jpg'){
 					storedList.splice(i, 1);
-					captureAllTabs(index, activeGroup, tabList, imgList, list, lostImg)
+					captureAllTabs(index, activeGroup, tabList, imgList, groupList, lostImg)
 					return;
 				} else {
-					storeAllImages(index+1, activeGroup, tabList, imgList, list, lostImg);
+					storeAllImages(index+1, activeGroup, tabList, imgList, groupList, lostImg);
 					return;
 				}
 			}
 		}
-		captureAllTabs(index, activeGroup, tabList, imgList, list, lostImg);
+		captureAllTabs(index, activeGroup, tabList, imgList, groupList, lostImg);
 	});
 }
 
-function captureAllTabs (index, activeGroup, tabList, imgList, list, lostImg){
+function captureAllTabs (index, activeGroup, tabList, imgList, groupList, lostImg){
 	var tab = tabList[index];
 	chrome.tabs.captureVisibleTab(chrome.windows.WINDOW_ID_CURRENT, {}, function(img){
 		if (chrome.extension.lastError){
 			var imgObj = {'url': tab.url, 'img': '/images/missingImg.jpg'};
 			imgList[activeGroup.id].push(imgObj);
 			lostImg.imgData.push(imgObj);
-			storeAllImages(index+1, activeGroup, tabList, imgList, list, lostImg);
+			storeAllImages(index+1, activeGroup, tabList, imgList, groupList, lostImg);
 			return;
 		}
 		var image = new Image();
@@ -286,7 +254,7 @@ function captureAllTabs (index, activeGroup, tabList, imgList, list, lostImg){
 			var imgObj = {'url': tab.url, 'img': newImg};
 			imgList[activeGroup.id].push(imgObj);
 			lostImg.imgData.push(imgObj);
-			storeAllImages(index+1, activeGroup, tabList, imgList, list, lostImg);
+			storeAllImages(index+1, activeGroup, tabList, imgList, groupList, lostImg);
 		}
 	});	
 }
@@ -304,6 +272,17 @@ function checkForDuplicates(pageList, url){
 		if (aUrl === url){
 			return true;
 		}
+	}
+	return false;
+}
+
+function checkMissingImg(activeGroup, url){
+	for (var i = 0; i < activeGroup.pageList.length; i++){
+		var page = activeGroup.pageList[i];
+		if (page.url === url && page.img === '/images/missingImg.jpg'){
+			activeGroup.pageList[i].img = undefined;
+			return true;
+		} 
 	}
 	return false;
 }
@@ -358,12 +337,12 @@ function createLostImage(action, id, newGroup, imgData){
 */
 function takeSnapShot(list, lostImg){
 	chrome.storage.local.get('undoObj', function(data){
-		var undoObj = data.undoObj === undefined ? {'index': 0, 'list': []} : data.undoObj;
+		var undoObj = data.undoObj === undefined ? {'index': 0, 'groupList': []} : data.undoObj;
 
-		if (undoObj.index < undoObj.list.length - 1){
-			undoObj.list.splice(undoObj.index + 1);
+		if (undoObj.index < undoObj.groupList.length - 1){
+			undoObj.groupList.splice(undoObj.index + 1);
 		}
-		var grpList = list.groupList;
+		var grpList = list.groups;
 		var snapShot = [];
 		for (var i = 0; i < grpList.length; i++){
 			var group = grpList[i];
@@ -385,8 +364,8 @@ function takeSnapShot(list, lostImg){
 			snapShot.push(groupCopy);
 		}
 		var addObj = {'snapshot': snapShot, 'lostImgs': lostImg};
-		undoObj.list.push(addObj);
-		undoObj.index = undoObj.list.length - 1;
+		undoObj.groupList.push(addObj);
+		undoObj.index = undoObj.groupList.length - 1;
 		data.undoObj = undoObj;
 
 		chrome.storage.local.set(data);
