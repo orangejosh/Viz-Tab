@@ -1,4 +1,29 @@
-
+/**************************************************************************
+ * build.js
+ *
+ * This runs when a Viz-Tab tab is opened. It retrieves
+ * the saved groups and pages and builds a webpage from
+ * that saved info. The saved data is in the format:
+ *
+ * GroupID (list of groups)
+ * 		Pages (list of saved pages in the group)
+ *			img: (saved image data from the screen shot)
+ *			url: (url of the saved page)
+ * GroupList
+ * 		Groups
+ * 			active: (is this the active group)
+ * 			id: (id of group)
+ * 			name: (name of group)
+ * 			pageList
+ * 				Pages
+ *					scroll:
+ *					title:
+ *					url:
+ * NewTab
+ * Toggle
+ * undoObj
+ *
+/**************************************************************************/
 
 var groupMargin = 70;
 var tabWidth = 144;
@@ -6,63 +31,35 @@ var tabWidth = 144;
 document.onload = init();
 
 function init() {
-	document.body.addEventListener('keydown', function(e){
-		var key = e.which || e.keyCode;
-		if (key >= 37 && key <= 40){
-			addKeyListener(key);
-		}
-	});
-
 	chrome.storage.local.get('groupList', function (list){
 		if (list.groupList === undefined){
 			list.groupList = [];
 		}
-		buildMenu(list);
-		buildTabs(list);
+		buildMenu();
+		buildGroups(list);
 		buildPages(list);
 		checkAllTabs(list);
-
-		/*
-		var button = document.createElement('button');
-		button.addEventListener('click', function(){
-			chrome.storage.local.get(null, function(data){
-				console.log(data);
-			})
-		})
-		document.body.appendChild(button);
-		*/
 	});
-}
 
-function addKeyListener(key){
-	var tabs = document.getElementsByClassName('tabButton');
-	for (var i = 0; i < tabs.length; i++){
-		var imgPath = tabs[i].getElementsByClassName('tabImage')[0].src;
-		var pathList = imgPath.split('/');
-		var img = pathList[pathList.length - 1];
-		if (img === 'tabOn.png'){
-			var switchIndex;
-			if (key === 39){
-				switchIndex = i === tabs.length - 1 ? 0 : i + 1;				
-			} else if (key === 37){
-				switchIndex = i == 0 ? tabs.length - 1 : i - 1;	
-			} else if (key === 38){
-				var groupBox = document.getElementById('groupBox');
-				var rowLength = Math.floor((groupBox.offsetWidth - groupMargin) / tabWidth);
-				switchIndex = i + rowLength > tabs.length - 1 ? tabs.length - 1 : i + rowLength;
-
-			} else if (key === 40) {
-				var groupBox = document.getElementById('groupBox');
-				var rowLength = Math.floor((groupBox.offsetWidth - groupMargin) / tabWidth);
-				switchIndex = i - rowLength < 0 ? 0 : i - rowLength;
-			}
-			switchGroup(tabs[switchIndex].id);
-			return;
+	document.body.addEventListener('keydown', function(e){
+		var key = e.which || e.keyCode;
+		if (key >= 37 && key <= 40){
+			keyPress(key);
 		}
-	}	
+	});
+
+	var button = document.createElement('button');
+	button.addEventListener('click', function(){
+		chrome.storage.local.get(null, function(data){
+			console.log(data);
+		})
+	})
+	document.body.appendChild(button);
+
 }
 
-function buildMenu(list){
+
+function buildMenu(){
 	var menuButton = document.getElementById('menuButton');
 	menuButton.addEventListener('click', toggleMenu);
 
@@ -80,9 +77,20 @@ function buildMenu(list){
 }
 
 
-/**************Build Tabs Start ******************/
 
-function buildTabs(list){
+
+/**************Build Groups Start ******************
+ *
+ * Saved pages are organized in groups, with each group getting its
+ * own tab to display all the pages.
+ *
+/***************************************************/
+
+/*
+ * Builds a tab for each group saved (a default tab if none are saved)
+ * and then organizes them on the page.
+ */
+function buildGroups(list){
 	if (list.groupList.length === 0){
 		buildEmptyGroup();
 		return;
@@ -97,14 +105,26 @@ function buildTabs(list){
 	}
 
 	for (var i = 0; i < list.groupList.length; i++){
-		var tabGroup = createGroupTab(list.groupList[i]);
-		groupBox.appendChild(tabGroup);
+		var group = list.groupList[i];
+		var tab = createTab(group);
+
+		var tabImage = createTabImage(group);
+		var title = createTabTitle(group);
+		var input = createTabInput(group);
+		var closeButton = createTabClose(group);
+
+		tab.appendChild(tabImage);
+		tab.appendChild(title);
+		tab.appendChild(closeButton);
+		tab.appendChild(input);
+
+		groupBox.appendChild(tab);
 
 		if (i % rowLength === 0){
 			rows--;
 		}
-		tabGroup.style.top = rows * 7 - 2 + 'px';
-		tabGroup.style.zIndex = rows;
+		tab.style.top = rows * 7 - 2 + 'px';
+		tab.style.zIndex = rows;
 	}
 
 	var clear = document.createElement('div');
@@ -113,45 +133,10 @@ function buildTabs(list){
 
 }
 
-function createTabExpandButton(){
-	var expandSwitch = document.createElement('input');
-	expandSwitch.id = 'groupSwitch';
-	expandSwitch.type = 'checkbox';
-
-	var expandLabel = document.createElement('label');
-	expandLabel.setAttribute('for', 'groupSwitch');
-	expandLabel.appendChild(expandSwitch);
-
-	var toggle = document.createElement('div');
-	toggle.id = 'expandToggle';
-	toggle.title = 'Expand Groups';
-	toggle.appendChild(expandLabel);
-
-	var groupBox = document.getElementById('groupBox');
-	groupBox.appendChild(toggle);
-
-	toggle.addEventListener('change', toggleGroupRows);
-	chrome.storage.local.get('groupToggle', function(toggle){
-		expandSwitch.checked = toggle.groupToggle === undefined ? true : toggle.groupToggle;
-		toggleGroupRows();
-	})	
-}
-
-function createGroupTab(group){
-	var tab = createTab(group);
-	var tabImage = createTabImage(group);
-	var title = createTabTitle(group);
-	var input = createTabInput(group);
-	var closeButton = createTabClose(group);
-
-	tab.appendChild(tabImage);
-	tab.appendChild(title);
-	tab.appendChild(closeButton);
-	tab.appendChild(input);
-
-	return tab;
-}
-
+/*
+ * Creates an html tab for the group and adds the appropriate
+ * listeners to drag, reorder, etc.
+ */
 function createTab(group){
 	var tab = document.createElement('div');
 	tab.className = 'tabButton';
@@ -197,6 +182,9 @@ function createTab(group){
 	return tab;	
 }
 
+/*
+ * Creates the image for the groups tab
+ */
 function createTabImage(group){
 	var tabImage = document.createElement('img');
 	tabImage.className = 'tabImage dragBlock';
@@ -212,6 +200,9 @@ function createTabImage(group){
 	return tabImage;
 }
 
+/*
+ * Creates the title for the groups tab
+ */
 function createTabTitle(group){
 	var title = document.createElement('p');
 	title.className = 'tabTitle';
@@ -223,6 +214,9 @@ function createTabTitle(group){
 	return title;
 }
 
+/*
+ * Creates the input box in the tab to input a new title for the group
+ */
 function createTabInput(group){
 	var input = document.createElement('input');
 	input.className = 'tabTitleInput';
@@ -250,6 +244,9 @@ function createTabInput(group){
 	return input;	
 }
 
+/*
+ * Creates a close button to delete the group
+ */
 function createTabClose(group){
 	var closeButton = document.createElement('img');
 	closeButton.className = 'closeGroupButton dragBlock';
@@ -262,29 +259,52 @@ function createTabClose(group){
 	return closeButton;
 }
 
-function checkAllTabs(list){
-	chrome.tabs.query({currentWindow: true}, function(tabs){
-		var onlyTab = true;
-		for (var i = 0; i < tabs.length; i++){
-			var tab = tabs[i];
-			var name = tab.url.substr(0,15);
-			if (name === 'chrome://newtab' && tab.active === false){
-				onlyTab = false;
-				break;
-			}
-		}
-		if (onlyTab === true){
-			chrome.storage.local.set({'undoObj' : {'index': 0, 'list': []}});
-		}
-		takeSnapShot(list);
-	});
+/*
+ * If there are muliple lines of groups a button is created
+ * that will collapse them so they don't take up too much space
+ */
+function createTabExpandButton(){
+	var expandSwitch = document.createElement('input');
+	expandSwitch.id = 'groupSwitch';
+	expandSwitch.type = 'checkbox';
+
+	var expandLabel = document.createElement('label');
+	expandLabel.setAttribute('for', 'groupSwitch');
+	expandLabel.appendChild(expandSwitch);
+
+	var toggle = document.createElement('div');
+	toggle.id = 'expandToggle';
+	toggle.title = 'Expand Groups';
+	toggle.appendChild(expandLabel);
+
+	var groupBox = document.getElementById('groupBox');
+	groupBox.appendChild(toggle);
+
+	toggle.addEventListener('change', toggleGroupRows);
+	chrome.storage.local.get('groupToggle', function(toggle){
+		expandSwitch.checked = toggle.groupToggle === undefined ? true : toggle.groupToggle;
+		toggleGroupRows();
+	})	
 }
+
 
 /**************Build Tabs End ******************/
 
 
-/**************Build Pages Start ******************/
 
+
+
+
+/**************Build Pages Start ******************
+ *
+ * Builds the thumbnails, titles, and icons for each page saved
+ * in the active group.
+ *
+/***********************************************
+
+/*
+ * Builds the page list of the active group
+ */
 function buildPages(list, imgList){
 	var activeGroup = getActiveGroup(list);
 	if (activeGroup === undefined){
@@ -309,32 +329,17 @@ function buildPages(list, imgList){
 
 	if (imgList === undefined){
 		chrome.storage.local.get(activeGroup.id, function(imageList){
-			setPageData(activeGroup, imageList[activeGroup.id]);
+			createPages(activeGroup, imageList[activeGroup.id]);
 		})
 	} else {
-		setPageData(activeGroup, imgList);
+		createPages(activeGroup, imgList);
 	}
 }
 
-function createOpenAllButton(expand){
-	var button = document.createElement('img');
-	button.src = 'images/expand.jpg';
-
-	var link = document.createElement('a');
-	link.id = 'openAll';
-	if (expand === false){
-		link.style.top = '-23px';
-	}
-	link.title = 'Open All Pages';
-	link.appendChild(button);
-
-	var groupBox = document.getElementById('groupBox');
-	groupBox.appendChild(link);
-
-	link.addEventListener('click', openAllPages)
-}
-
-function setPageData(activeGroup, imageList){
+/*
+ * Creates and displays all the pages saved in the active group
+ */
+function createPages(activeGroup, imgList){
 	var pageList = activeGroup.pageList;
 
 	for (var i = 0; i < pageList.length; i++){
@@ -342,46 +347,47 @@ function setPageData(activeGroup, imageList){
 		var url = page['url'];
 
 		var img = undefined;
-		for (var j = 0; j < imageList.length; j++){
-			var imgGroup = imageList[j];
+		for (var j = 0; j < imgList.length; j++){
+			var imgGroup = imgList[j];
 			if (imgGroup.url === url){
 				img = imgGroup.img;
 			}
 		}
-		createPage(page, img);
+
+		var box = document.getElementById('pageBox');
+		var block = createPageBlock();
+		var preview = createPreview(page, block, img);
+		var pageTitle = createPageTitle(block, page.title, page.url);
+		var input = createPageInput(page.url, pageTitle);
+
+		var closeButton = document.createElement('button');
+		closeButton.className = 'closeButton dragBlock';
+		closeButton.value = 'Close';
+		closeButton.id = page.url;
+		closeButton.draggable = false;
+
+		closeButton.addEventListener('click', function(){
+			closePage(closeButton.id);
+		});
+
+		var favicon = document.createElement('img');
+		favicon.className = 'favicon dragBlock';
+		favicon.src = 'http://www.google.com/s2/favicons?domain_url=' + page.url;
+		favicon.draggable = false;
+
+		block.appendChild(closeButton);
+		block.appendChild(preview);
+		block.appendChild(favicon);
+		block.appendChild(pageTitle);
+		block.appendChild(input);
+		box.appendChild(block);
 	}	
 }
 
-function createPage(page, img){
-	var box = document.getElementById('pageBox');
-	var block = createPageBlock();
-	var preview = createPreview(page, block, img);
-	var pageTitle = createPageTitle(block, page.title, page.url);
-	var input = createPageInput(page.url, pageTitle);
-
-	var closeButton = document.createElement('button');
-	closeButton.className = 'closeButton dragBlock';
-	closeButton.value = 'Close';
-	closeButton.id = page.url;
-	closeButton.draggable = false;
-
-	closeButton.addEventListener('click', function(){
-		closePage(closeButton.id);
-	});
-
-	var favicon = document.createElement('img');
-	favicon.className = 'favicon dragBlock';
-	favicon.src = 'http://www.google.com/s2/favicons?domain_url=' + page.url;
-	favicon.draggable = false;
-
-	block.appendChild(closeButton);
-	block.appendChild(preview);
-	block.appendChild(favicon);
-	block.appendChild(pageTitle);
-	block.appendChild(input);
-	box.appendChild(block);
-}
-
+/*
+ * Creates an html block to hold the thumbnail, and title.
+ * Adds the appropriate listeners to enable dragging and reordering.
+ */
 function createPageBlock(){
 	var block = document.createElement('div');
 	block.className = 'pageBlock';
@@ -415,6 +421,9 @@ function createPageBlock(){
 	return block;
 }
 
+/*
+ * Creates a thumbnail of the page to display
+ */
 function createPreview(page, block, img){
 	var image = document.createElement('img');
 	image.src = img;
@@ -441,6 +450,9 @@ function createPreview(page, block, img){
 	return link;
 }
 
+/*
+ * Creates a title for the page
+ */
 function createPageTitle(column, title, url){
 	var pageTitle = document.createElement('p');
 	pageTitle.className = 'pageLink dragBlock';
@@ -455,6 +467,9 @@ function createPageTitle(column, title, url){
 	return pageTitle;
 }
 
+/*
+ * Creates an input box to change the title of the page
+ */
 function createPageInput(url, pageTitle){
 	var input = document.createElement('input');
 	input.className = 'pageTitleInput';
@@ -483,14 +498,36 @@ function createPageInput(url, pageTitle){
 	return input;
 }
 
-/////height is causing the problem below
-
+/*
+ * Sets the dimensions of the image thumbnail
+ */
 function setImageDims(image, preview) {
 	var i = new Image();
 	i.src = image.src;
 	i.onload = function(){
 		image.style.width = '100%';
 	}
+}
+
+/*
+ * Creates a button to open every page in the group
+ */
+function createOpenAllButton(expand){
+	var button = document.createElement('img');
+	button.src = 'images/expand.jpg';
+
+	var link = document.createElement('a');
+	link.id = 'openAll';
+	if (expand === false){
+		link.style.top = '-23px';
+	}
+	link.title = 'Open All Pages';
+	link.appendChild(button);
+
+	var groupBox = document.getElementById('groupBox');
+	groupBox.appendChild(link);
+
+	link.addEventListener('click', openAllPages)
 }
 
 /**************Build Pages End ******************/
@@ -508,42 +545,27 @@ function getActiveGroup(list){
 	return list.groupList[list.groupList.length - 1];
 }
 
-function buildEmptyGroup(){
-	var pageBox = document.getElementById('pageBox');
-
-	var note = document.createTextNode("You don't seem to have any tabs saved.");
-	var header = document.createElement('h2');
-	header.appendChild(note);
-
-	var div1 = buildInstructions('images/address.png', '1. Open your favorite webpage in a new tab.');
-	var div2 = buildInstructions('images/TButton.png', '2. Click the MiniTab button at the top of your browser.');
-	var div3 = buildInstructions('images/Menu.png', '3. Click the Save button and you are done.');
-
-	var emptyDiv = document.createElement('div');
-	emptyDiv.id = 'emptyGroup';
-	emptyDiv.appendChild(header);
-	emptyDiv.appendChild(div1);
-	emptyDiv.appendChild(div2);
-	emptyDiv.appendChild(div3);
-
-	pageBox.appendChild(emptyDiv);
+function checkAllTabs(list){
+	chrome.tabs.query({currentWindow: true}, function(tabs){
+		var onlyTab = true;
+		for (var i = 0; i < tabs.length; i++){
+			var tab = tabs[i];
+			var name = tab.url.substr(0,15);
+			if (name === 'chrome://newtab' && tab.active === false){
+				onlyTab = false;
+				break;
+			}
+		}
+		if (onlyTab === true){
+			chrome.storage.local.set({'undoObj' : {'index': 0, 'list': []}});
+		}
+		takeSnapShot(list);
+	});
 }
 
-function buildInstructions(imgPath, title){
-	var img = document.createElement('img');
-	img.src = imgPath;
-	var text = document.createTextNode(title);
-	var title = document.createElement('h3');
-	title.appendChild(text);
-
-	var div = document.createElement('div');
-	div.className = 'openingImgs';
-	div.appendChild(img);
-	div.appendChild(title);
-
-	return div;
-}
-
+/*
+ * If there are many rows of groups they can be collapsed so as to take less space.
+ */
 function toggleGroupRows() {
 	var groupBox = document.getElementById('groupBox');
 	var rowLength = Math.floor((groupBox.offsetWidth - groupMargin) / tabWidth);
@@ -590,3 +612,75 @@ function toggleGroupRows() {
 	}
 	toggle.style.backgroundSize = '100% auto';	
 }
+
+/*
+ * Changes the active group depending on what arrow key is pressed
+ */
+function keyPress(key){
+	var tabs = document.getElementsByClassName('tabButton');
+	for (var i = 0; i < tabs.length; i++){
+		var imgPath = tabs[i].getElementsByClassName('tabImage')[0].src;
+		var pathList = imgPath.split('/');
+		var img = pathList[pathList.length - 1];
+		if (img === 'tabOn.png'){
+			var switchIndex;
+			if (key === 39){
+				switchIndex = i === tabs.length - 1 ? 0 : i + 1;				
+			} else if (key === 37){
+				switchIndex = i == 0 ? tabs.length - 1 : i - 1;	
+			} else if (key === 38){
+				var groupBox = document.getElementById('groupBox');
+				var rowLength = Math.floor((groupBox.offsetWidth - groupMargin) / tabWidth);
+				switchIndex = i + rowLength > tabs.length - 1 ? tabs.length - 1 : i + rowLength;
+
+			} else if (key === 40) {
+				var groupBox = document.getElementById('groupBox');
+				var rowLength = Math.floor((groupBox.offsetWidth - groupMargin) / tabWidth);
+				switchIndex = i - rowLength < 0 ? 0 : i - rowLength;
+			}
+			switchGroup(tabs[switchIndex].id);
+			return;
+		}
+	}	
+}
+
+/*
+ * Works with buildInstructions() to create an empty group
+ * Gets called when there are no groups saved
+ */
+function buildEmptyGroup(){
+	var pageBox = document.getElementById('pageBox');
+
+	var note = document.createTextNode("You don't seem to have any tabs saved.");
+	var header = document.createElement('h2');
+	header.appendChild(note);
+
+	var div1 = buildInstructions('images/address.png', '1. Open your favorite webpage in a new tab.');
+	var div2 = buildInstructions('images/TButton.png', '2. Click the MiniTab button at the top of your browser.');
+	var div3 = buildInstructions('images/Menu.png', '3. Click the Save button and you are done.');
+
+	var emptyDiv = document.createElement('div');
+	emptyDiv.id = 'emptyGroup';
+	emptyDiv.appendChild(header);
+	emptyDiv.appendChild(div1);
+	emptyDiv.appendChild(div2);
+	emptyDiv.appendChild(div3);
+
+	pageBox.appendChild(emptyDiv);
+}
+
+function buildInstructions(imgPath, title){
+	var img = document.createElement('img');
+	img.src = imgPath;
+	var text = document.createTextNode(title);
+	var title = document.createElement('h3');
+	title.appendChild(text);
+
+	var div = document.createElement('div');
+	div.className = 'openingImgs';
+	div.appendChild(img);
+	div.appendChild(title);
+
+	return div;
+}
+

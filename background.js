@@ -1,45 +1,51 @@
 
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
-	chrome.storage.local.get('groupList', function(list){
-		if (request.onePage !== undefined){
-			group = getExistingGroup(request.onePage, list);
-			isNew = group === null;
+main();
 
-			if (group === null){
-				group = getNewGroup(request.onePage, list);
-			}
-			
-			setActiveGroup(group, list);
-			storeOnePage(group, list, isNew);
-		} else if (request.allPages !== undefined){
-			group = getExistingGroup(request.allPages, list);
-			isNew = group === null;
+function main(){
+	// Add listeners that recieve messages from popup.js  to save one or all pages.
+	chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
+		chrome.storage.local.get('groupList', function(list){
+			if (request.onePage !== undefined){
+				group = getExistingGroup(request.onePage, list);
+				isNew = group === null;
 
-			if (group === null){
-				group = getNewGroup(request.allPages, list);
-			}
+				if (group === null){
+					group = getNewGroup(request.onePage, list);
+				}
+				
+				setActiveGroup(group, list);
+				storeOnePage(group, list, isNew);
+			} else if (request.allPages !== undefined){
+				group = getExistingGroup(request.allPages, list);
+				isNew = group === null;
 
-			setActiveGroup(group, list);
-			chrome.tabs.query({currentWindow: true}, function(theTabs){
-				storeAllPages(group, 0, theTabs, list, isNew)
-			})
-		}
-	})
-	sendResponse({complete: 'true'});
-})
+				if (group === null){
+					group = getNewGroup(request.allPages, list);
+				}
 
-chrome.tabs.onCreated.addListener(function(tab) {
-	if (tab.url === "chrome://newtab/"){
-		chrome.storage.local.get('newTab', function(data){
-			var newTabOn = data.newTab !== undefined && data.newTab === true;
-			if (newTabOn){
-				chrome.tabs.update(tab.id, {
-					url: chrome.extension.getURL("newTab.html")
+				setActiveGroup(group, list);
+				chrome.tabs.query({currentWindow: true}, function(theTabs){
+					storeAllPages(group, 0, theTabs, list, isNew)
 				})
 			}
 		})
-	}
-})
+		sendResponse({complete: 'true'});
+	})
+
+	chrome.tabs.onCreated.addListener(function(tab) {
+		if (tab.url === "chrome://newtab/"){
+			chrome.storage.local.get('newTab', function(data){
+				var newTabOn = data.newTab !== undefined && data.newTab === true;
+				if (newTabOn){
+					chrome.tabs.update(tab.id, {
+						url: chrome.extension.getURL("newTab.html")
+					})
+				}
+			})
+		}
+	})
+}
+
 
 function getExistingGroup(name, list){
 	if (list.groupList === undefined){
