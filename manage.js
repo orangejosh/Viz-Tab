@@ -389,7 +389,6 @@ function rebuildPage(data){
 }
 
 function clearURL(){
-	console.log('clearURL');
 	var help = document.getElementsByClassName('help');
 	var i = help.length - 1;
 	while (i >= 0){

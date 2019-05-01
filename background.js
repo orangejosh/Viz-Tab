@@ -84,14 +84,14 @@ function setActiveGroup(group, data){
 
 function storeOnePage(activeGroup, data, newGroup) {
 	chrome.tabs.query({active:true, currentWindow: true}, function(tabs){
+		if (tabs[0].url.substring(0,9) == 'chrome://' || tabs[0].url.substring(0,19) == 'chrome-extension://'){
+			return;
+		}
+
 		page = getPage(activeGroup, tabs[0].url);
 
 		if (page !== null){
-			if (url.substring(0,9) == 'chrome://' || url.substring(0,19) == 'chrome-extension://'){
-				return;
-			} else if (page.img === '/images/missingImg.jpg'){
-				page.img = undefined;
-			}
+			return;
 		} else {
 			page = {
 				'url': tabs[0].url,
@@ -112,32 +112,41 @@ function storeAllPages(index, activeGroup, tabData, data, newGroup){
 		return;
 	} else {
 		chrome.tabs.update(tabData[index].id, {active: true}, function() {
-			chrome.tabs.captureVisibleTab(chrome.windows.WINDOW_ID_CURRENT, {}, function(img){
-				if (chrome.extension.lastError){
-					storeAllPages(index++, activeGroup, tabData, data, newGroup);
-					return;
-				}
-				var image = new Image();
-				image.src = img;
+			page = getPage(activeGroup, tabData[index].url);
 
-				image.onload = function() {
-					image = scaleImage(image);
+			if (page !== null || 
+				tabData[index].url.substring(0,9) === 'chrome://' || 
+				tabData[index].url.substring(0,19) === 'chrome-extension://') 
+			{ 
+				storeAllPages(index + 1, activeGroup, tabData, data, newGroup);
+			} else {
+				chrome.tabs.captureVisibleTab(chrome.windows.WINDOW_ID_CURRENT, {}, function(img){
+					if (chrome.extension.lastError){
+						storeAllPages(index++, activeGroup, tabData, data, newGroup);
+						return;
+					}
+					var image = new Image();
+					image.src = img;
 
-					var newPage = {
-						'url': tabData[index].url,
-						'title': tabData[index].title,
-						'scroll': 0,
-						'img': image
+					image.onload = function() {
+						image = scaleImage(image);
+
+						var newPage = {
+							'url': tabData[index].url,
+							'title': tabData[index].title,
+							'scroll': 0,
+							'img': image
+						}
+
+						activeGroup.pageList.push(newPage);
+
+						chrome.storage.local.set({'groups': data.groups}, function() {
+							storeAllPages(index + 1, activeGroup, tabData, data, newGroup);
+						});
 					}
 
-					activeGroup.pageList.push(newPage);
-
-					chrome.storage.local.set({'groups': data.groups}, function() {
-						storeAllPages(index + 1, activeGroup, tabData, data, newGroup);
-					});
-				}
-
-			});
+				});
+			}
 		});
 	}
 }
