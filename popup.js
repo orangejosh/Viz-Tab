@@ -36,18 +36,18 @@ function addListeners(){
 }
 
 function createGroupList(){
-	chrome.storage.local.get('groupList', function(list){
+	chrome.storage.local.get('groups', function(data){
 		var d = new Date();
 		var date = d.toLocaleDateString();
 
 		var option = document.createElement('option');
-		option.value = checkSameName(date, list.groupList);
+		option.value = checkSameName(date, data.groups);
 		option.text = 'New Group';
 
 		var grpButton = document.getElementById('groupList');
 		grpButton.appendChild(option);
 
-		if (list.groupList === undefined || list.groupList.length === 0){
+		if (data.groups === undefined || data.groups.length === 0){
 			var groupList = document.getElementById('groupList');
 			groupList.style.display = 'none';
 
@@ -59,8 +59,8 @@ function createGroupList(){
 
 		var activeGroup;
 
-		for (var i = 0; i < list.groupList.length; i++){
-			var aGroup = list.groupList[i];
+		for (var i = 0; i < data.groups.length; i++){
+			var aGroup = data.groups[i];
 
 			if (aGroup.active == true){
 				activeGroup = aGroup;

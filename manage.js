@@ -89,7 +89,7 @@ function renameGroup(groupName){
 
 function saveGroupName(name){
 	chrome.storage.local.get('groups', function(data){
-		var newName = checkSameName(name, grpList);
+		var newName = checkSameName(name, data.groups);
 		for (var i = 0; i < data.groups.length; i++){
 			if (data.groups[i].active){
 				data.groups[i].name = name;
@@ -179,29 +179,13 @@ function closeGroup(groupName){
 			var group = data.groups[i];
 			if (group.name === groupName){
 				var removeGroup = data.groups.splice(i, 1);
-				var remGrpID = removeGroup[0].id;
+//				var remGrpID = removeGroup[0].id;
 				if (group.active === true){
-					setActiveIndex(i, data.groups);
+					setActiveIndex(i, data);
 				}
 
 				chrome.storage.local.set(data, function(){
-					//TODO This needs to be fixed
-					/*
-					chrome.storage.local.get(remGrpID, function(data){
-						var imgGrp = createLostImage(
-							'close', 
-							remGrpID, 
-							true, 
-							data[remGrpID]
-						);
-						takeSnapShot(list, imgGrp);
-						chrome.storage.local.remove(remGrpID, function(){
-							rebuildPage(list);
-							allignGroups();
-							redrawPage();
-						});
-					})
-					*/
+					redrawPage();
 				});
 				break;
 			}
@@ -502,13 +486,13 @@ function getTargetIndex(target, elem){
 	}
 }
 
-function setActiveIndex(index, groupList){
-	if (groupList.length === 0){
+function setActiveIndex(index, data){
+	if (data.groups.length === 0){
 		return;
-	} else if (index === groupList.length){
-		setActiveGroup(index-1, groupList)
+	} else if (index === data.groups.length){
+		setActiveGroup(index-1, data)
 	} else {
-		setActiveGroup(index, groupList);
+		setActiveGroup(index, data);
 	} 
 }
 
