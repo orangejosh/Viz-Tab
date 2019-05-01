@@ -169,7 +169,7 @@ function createTab(group){
 		if (dragTarget.className === 'pageBlock' && event.target.className === 'tabButton'){
 			var tabImg = event.target.getElementsByClassName('tabImage')[0];
 			tabImg.src = 'images/tabOn.png';
-			reGroupPage(dragTarget, event.target.id);
+			reGroupPage(dragTarget, event.target);
 		} else if (dragTarget.className === 'tabButton' && event.target.className === 'tabButton'){
 	 		saveNewGroupOrder();
 		}

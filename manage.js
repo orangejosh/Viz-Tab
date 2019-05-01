@@ -127,9 +127,6 @@ function allignGroups(){
 			var pageBox = document.getElementById('pageBox');
 			var openButton = document.getElementById('openAll');
 			pageBox.style.top ='0px';
-			// if (openButton != null){
-			// 	openButton.style.top ='-23px';
-			// }
 		}
 
 		for (var i = 0; i < tabs.length; i++){
@@ -145,7 +142,6 @@ function allignGroups(){
 			tab.style.zIndex = rows;
 		}
 	})
-
 }
 
 function saveNewGroupOrder(){
@@ -193,62 +189,37 @@ function closeGroup(groupName){
 	})
 }
 
-function reGroupPage(pageBlock, newGroupID) {
+function reGroupPage(page, target) {
 	chrome.storage.local.get('groups', function(data){
 		var activeGroup = getActiveGroup(data);
-		//TODO this needs to be fixed
 
-		chrome.storage.local.get(activeGroup.id, function(data1){
-			chrome.storage.local.get(newGroupID, function(data2){
-				var grpList = list.groupList;
-				var activeGroup = getActiveGroup(list);
-				var pageID = pageBlock.getElementsByTagName('a')[0].id;
+		var targetGroup;
+		for (var i = 0; i < data.groups.length; i++){
+			var aGroup = data.groups[i];
+			if (aGroup.id === target.id){
+				targetGroup = aGroup;
+				break;
+			}
+		}
 
-				var page;
+		var pageURL= page.getElementsByTagName('a')[0].id;
+		var pageObj;
+		for (var i = 0; i < activeGroup.pageList.length; i++){
+			var aPage = activeGroup.pageList[i];
+			if (aPage.url === pageURL){
+				pageObj = activeGroup.pageList[i];				
+				activeGroup.pageList.splice(i, 1);
+				break;
+			}
+		}
 
-				for (var i = 0; i < activeGroup.pageList.length; i++){
-					var aPage = activeGroup.pageList[i];
-					if (aPage.url === pageID){
-						page = activeGroup.pageList.splice(i, 1)[0];
-						break;
-					}
-				}
-				for (var j = 0; j < grpList.length; j++){
-					var group = grpList[j];
-					if (group.id === newGroupID){
-						group.pageList.push(page);
-						break;
-					}
-				}
+		targetGroup.pageList.push(pageObj);
 
-				var imgObj;
-
-				for (var k = 0; k < data1[activeGroup.id].length; k++){
-					if (data1[activeGroup.id][k].url === page.url){
-						imgObj = data1[activeGroup.id].splice(k, 1)[0];
-						break;
-					}
-				}
-				data2[newGroupID].push(imgObj);
-				var lostImg = createLostImage(
-					'move',
-					activeGroup.id,
-					false,
-					[imgObj],
-					newGroupID
-				);
-				chrome.storage.local.set(list, function(){
-					chrome.storage.local.set(data1, function(){
-						chrome.storage.local.set(data2, function (){
-							rebuildPage(list);
-							takeSnapShot(list, lostImg);
-							redrawPage();
-						})
-					})
-				})
-			})
-		})
-	})
+		chrome.storage.local.set(data, function(){
+//			takeSnapShot(data);
+			redrawPage();
+		});
+	});
 }
 
 /****************** Manage Groups End *******************/
@@ -318,13 +289,10 @@ function closePage(id){
 		var columnList = document.getElementsByClassName('pageBlock');
 
 		for (var i = 0; i < columnList.length; i++){
-
 			var pageBlock = columnList[i];
 			var button = pageBlock.getElementsByClassName('closeButton');
-//			var url = pageBlock.getElementsByTagName('a')[0].id;
 
 			if (button[0].id === id){
-//				pageBlock.parentElement.removeChild(pageBlock);
 				var activeGroup = getActiveGroup(data);
 
 				activeGroup.pageList.splice(i, 1);
@@ -339,27 +307,14 @@ function closePage(id){
 }
 
 function openAllPages(){
-//TODO do we need a pages
 	chrome.storage.local.get('groups', function(data){
 		var activeGroup = getActiveGroup(data);
 		var pageList = activeGroup.pageList;
-		var scrollList = [];
 
 		for (var i = 0; i < pageList.length; i++){
 			var page = pageList[i];
-
-			var scrollObj = {
-				url: page.url,
-				scroll: page.scroll
-			}
-			scrollList.push(scrollObj);
+			window.open(page.url, '_blank');
 		}
-		chrome.storage.local.set({pages: scrollList}, function(){
-			for (var j = 0; j < scrollList.length; j++){
-				var scrollObj = scrollList[j];
-				window.open(scrollObj.url, '_blank');
-			}
-		})
 	})
 }
 
