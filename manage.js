@@ -6,30 +6,22 @@ var dragTarget;
 chrome.runtime.onMessage.addListener(
 	function(request, sender, sendResponse){
 		if (request.page === 'redraw'){
-			chrome.storage.local.get('groupList', function(list){
-				rebuildPage(list);
-			});
+			redrawPage();
 		}
 	}
 )
 
-function sendRedraw(){
-	chrome.windows.getAll({populate:true}, function(windows){
-		windows.forEach(function(aWindow){
-			aWindow.tabs.forEach(function(tab){
-				if (tab.url.substr(0,15) === 'chrome://newtab'){
-					chrome.tabs.sendMessage(tab.id, {page: 'redraw'});
-				}	
-			})
-		})
-	})
+function redrawPage(){
+	chrome.storage.local.get('groups', function(data){
+		rebuildPage(data);
+	});
 }
 
 /****************** Manage Groups Start *******************/ 
 
-function setActiveGroup(index, groupList){
-	for (var i = 0; i < groupList.length; i++){
-		var aGroup = groupList[i];
+function setActiveGroup(index, data){
+	for (var i = 0; i < data.groups.length; i++){
+		var aGroup = data.groups[i];
 		if (i === index){
 			aGroup.active = true;
 		} else {
@@ -40,9 +32,9 @@ function setActiveGroup(index, groupList){
 
 function switchGroup(id){
 	var activeGroup;
-	chrome.storage.local.get('groupList', function(list){
-		for (var i = 0; i < list.groupList.length; i++){
-			var aGroup = list.groupList[i];
+	chrome.storage.local.get('groups', function(data){
+		for (var i = 0; i < data.groups.length; i++){
+			var aGroup = data.groups[i];
 			if (aGroup.id === id){
 				if (aGroup.active === true){
 					return;
@@ -54,7 +46,7 @@ function switchGroup(id){
 			}
 		}
 
-		chrome.storage.local.set(list, function(){
+		chrome.storage.local.set(data, function(){
 			var tabList = document.getElementsByClassName('tabButton');
 			for (var i = 0; i < tabList.length; i++){
 				var tab = tabList[i];
@@ -72,10 +64,10 @@ function switchGroup(id){
 				}
 			}
 			clearPage();
-			buildPages(list);
+			buildPages(data);
 			toggleGroupRows();
-			takeSnapShot(list);
-			sendRedraw();
+			//takeSnapShot(data);
+			redrawPage();
 		})
 	})
 }
@@ -96,25 +88,16 @@ function renameGroup(groupName){
 }
 
 function saveGroupName(name){
-	chrome.storage.local.get('groupList', function(list){
-		var grpList = list.groupList;
+	chrome.storage.local.get('groups', function(data){
 		var newName = checkSameName(name, grpList);
-		for (var i = 0; i < grpList.length; i++){
-			var group = grpList[i];
-			if (group.active === true){
-				chrome.storage.local.get(group.name, function(name){
-					var imgList = name[group.name];
-					chrome.storage.local.remove(group.name, function(){
-						chrome.storage.local.set({[newName]: imgList}, function(){
-							group.name = newName;
-							chrome.storage.local.set(list, function(){
-								rebuildPage(list);
-								takeSnapShot(list);
-								sendRedraw();
-							})
-						})
-					})
-				})
+		for (var i = 0; i < data.groups.length; i++){
+			if (data.groups[i].active){
+				data.groups[i].name = name;
+				chrome.storage.local.set(data, function() {
+					rebuildPage(data);
+//					takeSnapShot(data);
+					redrawPage();
+				});
 				return;
 			}
 		}
@@ -166,45 +149,44 @@ function allignGroups(){
 }
 
 function saveNewGroupOrder(){
-	chrome.storage.local.get('groupList', function(list){
-		var grpList = list.groupList;
-		var newGrpList = [];
+	chrome.storage.local.get('groups', function(data){
+		var newGroupOrder= [];
 
 		var tabList = document.getElementsByClassName('tabButton');
 		for (var i = 0; i < tabList.length; i++){
 			var tab = tabList[i];
 			var title = tab.getElementsByClassName('tabTitle')[0].innerHTML;
 
-			for (var k = 0; k < grpList.length; k++){
-				var group = grpList[k];
+			for (var k = 0; k < data.groups.length; k++){
+				var group = data.groups[k];
 				if (group.name === title){
-					newGrpList.push(group);
+					newGroupOrder.push(group);
 					break;
 				}
 			}
 		}
-		list.groupList = newGrpList;
-		chrome.storage.local.set(list, function(){
-			takeSnapShot(list);
-			sendRedraw();
+		data.groups = newGroupOrder;
+		chrome.storage.local.set(data, function(){
+//			takeSnapShot(data);
+			redrawPage();
 		});
 	});
 }
 
 function closeGroup(groupName){
-	chrome.storage.local.get('groupList', function(list){
-		var grpList = list.groupList;
-
-		for (var i = 0; i < grpList.length; i++){
-			var group = grpList[i];
+	chrome.storage.local.get('groups', function(data){
+		for (var i = 0; i < data.groups.length; i++){
+			var group = data.groups[i];
 			if (group.name === groupName){
-				var removeGroup = list.groupList.splice(i, 1);
+				var removeGroup = data.groups.splice(i, 1);
 				var remGrpID = removeGroup[0].id;
 				if (group.active === true){
-					setActiveIndex(i, list.groupList);
+					setActiveIndex(i, data.groups);
 				}
 
-				chrome.storage.local.set(list, function(){
+				chrome.storage.local.set(data, function(){
+					//TODO This needs to be fixed
+					/*
 					chrome.storage.local.get(remGrpID, function(data){
 						var imgGrp = createLostImage(
 							'close', 
@@ -216,9 +198,10 @@ function closeGroup(groupName){
 						chrome.storage.local.remove(remGrpID, function(){
 							rebuildPage(list);
 							allignGroups();
-							sendRedraw();
+							redrawPage();
 						});
 					})
+					*/
 				});
 				break;
 			}
@@ -227,8 +210,10 @@ function closeGroup(groupName){
 }
 
 function reGroupPage(pageBlock, newGroupID) {
-	chrome.storage.local.get('groupList', function(list){
-		var activeGroup = getActiveGroup(list);
+	chrome.storage.local.get('groups', function(data){
+		var activeGroup = getActiveGroup(data);
+		//TODO this needs to be fixed
+
 		chrome.storage.local.get(activeGroup.id, function(data1){
 			chrome.storage.local.get(newGroupID, function(data2){
 				var grpList = list.groupList;
@@ -273,7 +258,7 @@ function reGroupPage(pageBlock, newGroupID) {
 						chrome.storage.local.set(data2, function (){
 							rebuildPage(list);
 							takeSnapShot(list, lostImg);
-							sendRedraw();
+							redrawPage();
 						})
 					})
 				})
@@ -289,18 +274,18 @@ function reGroupPage(pageBlock, newGroupID) {
 /****************** Manage Pages Start *******************/ 
 
 function savePageName(newName, url){
-	chrome.storage.local.get('groupList', function(list){
-		var grpList = list.groupList;
-		var activeGroup = getActiveGroup(list);
+	chrome.storage.local.get('groups', function(data){
+		var grpList = data.groups;
+		var activeGroup = getActiveGroup(data);
 
 		for (var i = 0; i < activeGroup.pageList.length; i++){
 			var page = activeGroup.pageList[i];
 			if (page.url === url){
 				page.title = newName;
-				chrome.storage.local.set(list, function(){
-					rebuildPage(list);
-					takeSnapShot(list);
-					sendRedraw();
+				chrome.storage.local.set(data, function(){
+					rebuildPage(data);
+					//takeSnapShot(data);
+					redrawPage();
 				});
 			}
 		}
@@ -318,8 +303,8 @@ function reOrderPages(event){
 }
 
 function saveNewPageOrder(){
-	chrome.storage.local.get('groupList', function(list){
-		var activeGroup = getActiveGroup(list);
+	chrome.storage.local.get('groups', function(data){
+		var activeGroup = getActiveGroup(data);
 		var pageList = activeGroup.pageList;
 		var newPageList = [];
 
@@ -337,53 +322,31 @@ function saveNewPageOrder(){
 			}
 		}
 		activeGroup.pageList = newPageList;
-		chrome.storage.local.set(list, function(){
-			takeSnapShot(list);
-			sendRedraw();
+		chrome.storage.local.set(data, function(){
+//			takeSnapShot(data);
+			redrawPage();
 		});
 	})
 }
 
 function closePage(id){
-	chrome.storage.local.get('groupList', function(list){
+	chrome.storage.local.get('groups', function(data){
 		var columnList = document.getElementsByClassName('pageBlock');
 
 		for (var i = 0; i < columnList.length; i++){
+
 			var pageBlock = columnList[i];
 			var button = pageBlock.getElementsByClassName('closeButton');
-			var url = pageBlock.getElementsByTagName('a')[0].id;
+//			var url = pageBlock.getElementsByTagName('a')[0].id;
 
 			if (button[0].id === id){
-				pageBlock.parentElement.removeChild(pageBlock);
-				var activeGroup = getActiveGroup(list);
+//				pageBlock.parentElement.removeChild(pageBlock);
+				var activeGroup = getActiveGroup(data);
 
 				activeGroup.pageList.splice(i, 1);
-				chrome.storage.local.set(list, function(){
-					chrome.storage.local.get(activeGroup.id, function(data){
-						var imgList = data[activeGroup.id];
-						for (var j = 0; j < imgList.length; j++){
-							var aImg = imgList[j];
-							if (aImg.url === url){
-								var img = data[activeGroup.id].splice(j, 1);
-								var imgObj = createLostImage(
-									'close', 
-									activeGroup.id, 
-									false, 
-									[{'img': img[0].img, 'url': img[0].url}]
-								);
-
-								chrome.storage.local.set(data, function (){
-									takeSnapShot(list, imgObj);
-									sendRedraw();
-									if (i === 0){
-										var openButton = document.getElementById('openAll');
-										openButton.parentNode.removeChild(openButton);
-									}
-								});
-								break;
-							};
-						}
-					});
+				chrome.storage.local.set(data, function(){
+//					takeSnapShot(list, imgObj);
+					redrawPage();
 				});
 				return;
 			}
@@ -392,8 +355,9 @@ function closePage(id){
 }
 
 function openAllPages(){
-	chrome.storage.local.get('groupList', function(list){
-		var activeGroup = getActiveGroup(list);
+//TODO do we need a pages
+	chrome.storage.local.get('groups', function(data){
+		var activeGroup = getActiveGroup(data);
 		var pageList = activeGroup.pageList;
 		var scrollList = [];
 
@@ -418,13 +382,14 @@ function openAllPages(){
 /****************** Manage Groups End *******************/
 
 
-function rebuildPage(list, imgList){
+function rebuildPage(data){
 	clearURL();
-	buildGroups(list);
-	buildPages(list, imgList);
+	buildGroups(data);
+	buildPages(data);
 }
 
 function clearURL(){
+	console.log('clearURL');
 	var help = document.getElementsByClassName('help');
 	var i = help.length - 1;
 	while (i >= 0){

@@ -111,28 +111,32 @@ function storeAllPages(index, activeGroup, tabData, data, newGroup){
 		sendRedraw();
 		return;
 	} else {
-		console.log(index);
 		chrome.tabs.update(tabData[index].id, {active: true}, function() {
 			chrome.tabs.captureVisibleTab(chrome.windows.WINDOW_ID_CURRENT, {}, function(img){
 				if (chrome.extension.lastError){
-
+					storeAllPages(index++, activeGroup, tabData, data, newGroup);
+					return;
 				}
 				var image = new Image();
 				image.src = img;
 
-				var newTab = {
-					'url': tabData[index].url,
-					'title': tabData[index].title,
-					'scroll': 0,
-					'img': scaleImage(image)
+				image.onload = function() {
+					image = scaleImage(image);
+
+					var newPage = {
+						'url': tabData[index].url,
+						'title': tabData[index].title,
+						'scroll': 0,
+						'img': image
+					}
+
+					activeGroup.pageList.push(newPage);
+
+					chrome.storage.local.set({'groups': data.groups}, function() {
+						storeAllPages(index + 1, activeGroup, tabData, data, newGroup);
+					});
 				}
 
-				activeGroup.pageList.push(newTab);
-
-				chrome.storage.local.set({'groups': data.groups}, function() {
-					console.log(data.groups);
-					storeAllPages(index++, activeGroup, tabData, data, newGroup);
-				});
 			});
 		});
 	}

@@ -5,23 +5,19 @@
  * the saved groups and pages and builds a webpage from
  * that saved info. The saved data is in the format:
  *
- * GroupID (data of groups)
- * 		Pages (data of saved pages in the group)
- *			img: (saved image data from the screen shot)
- *			url: (url of the saved page)
- * GroupList
- * 		Groups
+ * Object 
+ * 		groups (an array of groups)
  * 			active: (is this the active group)
  * 			id: (id of group)
  * 			name: (name of group)
- * 			pageList
- * 				Pages
- *					scroll:
- *					title:
- *					url:
- * NewTab
- * Toggle
- * undoObj
+ * 			pageList (an array of pages)
+ *				scroll:
+ *				title:
+ *				url:
+				img:
+ * 		newTab
+ * 		toggle
+ * 		undoObj
  *
 /**************************************************************************/
 
@@ -305,7 +301,7 @@ function createTabExpandButton(){
 /*
  * Builds the page data of the active group
  */
-function buildPages(data, imgList){
+function buildPages(data){
 	var activeGroup = getActiveGroup(data);
 	if (activeGroup === undefined){
 		return;
@@ -327,32 +323,19 @@ function buildPages(data, imgList){
 		}
 	}
 
-	if (imgList === undefined){
-		chrome.storage.local.get(activeGroup.id, function(imageList){
-			createPages(activeGroup, imageList[activeGroup.id]);
-		})
-	} else {
-		createPages(activeGroup, imgList);
-	}
+	createPages(activeGroup, data);
 }
 
 /*
  * Creates and displays all the pages saved in the active group
  */
-function createPages(activeGroup, imgList){
+function createPages(activeGroup, data){
 	var pageList = activeGroup.pageList;
 
 	for (var i = 0; i < pageList.length; i++){
 		var page = pageList[i];
-		var url = page['url'];
-
-		var img = undefined;
-		for (var j = 0; j < imgList.length; j++){
-			var imgGroup = imgList[j];
-			if (imgGroup.url === url){
-				img = imgGroup.img;
-			}
-		}
+		var url = page.url;
+		var img = page.img
 
 		var box = document.getElementById('pageBox');
 		var block = createPageBlock();
@@ -367,7 +350,7 @@ function createPages(activeGroup, imgList){
 		closeButton.draggable = false;
 
 		closeButton.addEventListener('click', function(){
-			closePage(closeButton.id);
+			closePage(this.id);
 		});
 
 		var favicon = document.createElement('img');

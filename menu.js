@@ -216,8 +216,8 @@ function redoMovePage(lostImg, list){
 
 function help() {
 	var pageList = [
-			{'scroll': 0, 'title': 'Google', 'url': 'https://www.google.com'},
-			{'scroll': 0, 'title': 'Bing', 'url': 'https://www.bing.com'}
+			{'scroll': 0, 'title': 'Google', 'url': 'https://www.google.com', 'img': '/images/google.jpg'},
+			{'scroll': 0, 'title': 'Bing', 'url': 'https://www.bing.com', 'img': '/images/bing.jpg'}
 		]
 	var group1 = createDummyGroup(true, 'SearchEngines', pageList);
 	var group2 = createDummyGroup(false, 'Shopping', []);
@@ -225,14 +225,10 @@ function help() {
 	var group4 = createDummyGroup(false, 'Fun', []);
 
 	var groupList = {
-		'groupList':[group1, group2, group3, group4]
+		'groups':[group1, group2, group3, group4]
 	}
 
-	var imgObj = [
-		{'img': '/images/google.jpg', 'url': 'https://www.google.com'},
-		{'img': '/images/bing.jpg', 'url': 'https://www.bing.com'}
-	]
-	createHelpPage(groupList, imgObj);
+	createHelpPage(groupList);
 }
 
 function createDummyGroup(active, name, pageList){
@@ -245,16 +241,16 @@ function createDummyGroup(active, name, pageList){
 	return group;
 }
 
-function createHelpPage(groupList, imgObj){
+function createHelpPage(groupList){
 	var pageScreen = document.createElement('div');
 	pageScreen.id = 'screen';
-	rebuildPage(groupList, imgObj);
+	rebuildPage(groupList);
 	document.body.insertBefore(pageScreen, document.body.firstChild);
 
 	pageScreen.addEventListener('click', function(){
 		document.body.removeChild(pageScreen);
-		chrome.storage.local.get('groupList', function(list){
-			rebuildPage(list);
+		chrome.storage.local.get('groups', function(data){
+			rebuildPage(data);
 		})
 	})
 
