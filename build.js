@@ -5,8 +5,8 @@
  * the saved groups and pages and builds a webpage from
  * that saved info. The saved data is in the format:
  *
- * GroupID (list of groups)
- * 		Pages (list of saved pages in the group)
+ * GroupID (data of groups)
+ * 		Pages (data of saved pages in the group)
  *			img: (saved image data from the screen shot)
  *			url: (url of the saved page)
  * GroupList
@@ -31,14 +31,14 @@ var tabWidth = 144;
 document.onload = init();
 
 function init() {
-	chrome.storage.local.get('groupList', function (list){
-		if (list.groupList === undefined){
-			list.groupList = [];
+	chrome.storage.local.get('groups', function (data){
+		if (data.groups === undefined){
+			data.groups = [];
 		}
 		buildMenu();
-		buildGroups(list);
-		buildPages(list);
-		checkAllTabs(list);
+		buildGroups(data);
+		buildPages(data);
+		checkAllTabs(data);
 	});
 
 	document.body.addEventListener('keydown', function(e){
@@ -90,22 +90,22 @@ function buildMenu(){
  * Builds a tab for each group saved (a default tab if none are saved)
  * and then organizes them on the page.
  */
-function buildGroups(list){
-	if (list.groupList.length === 0){
+function buildGroups(data){
+	if (data.groups === undefined || data.groups.length === 0){
 		buildEmptyGroup();
 		return;
 	}
 
 	var groupBox = document.getElementById('groupBox');
 	var rowLength = Math.floor((groupBox.offsetWidth - groupMargin) / tabWidth);
-	var rows = Math.ceil(list.groupList.length / rowLength);
+	var rows = Math.ceil(data.groups.length / rowLength);
 
 	if (rows > 1){
 		createTabExpandButton();
 	}
 
-	for (var i = 0; i < list.groupList.length; i++){
-		var group = list.groupList[i];
+	for (var i = 0; i < data.groups.length; i++){
+		var group = data.groups[i];
 		var tab = createTab(group);
 
 		var tabImage = createTabImage(group);
@@ -135,7 +135,7 @@ function buildGroups(list){
 
 /*
  * Creates an html tab for the group and adds the appropriate
- * listeners to drag, reorder, etc.
+ * dataeners to drag, reorder, etc.
  */
 function createTab(group){
 	var tab = document.createElement('div');
@@ -303,17 +303,17 @@ function createTabExpandButton(){
 /***********************************************
 
 /*
- * Builds the page list of the active group
+ * Builds the page data of the active group
  */
-function buildPages(list, imgList){
-	var activeGroup = getActiveGroup(list);
+function buildPages(data, imgList){
+	var activeGroup = getActiveGroup(data);
 	if (activeGroup === undefined){
 		return;
 	}
 
 	var groupBox = document.getElementById('groupBox');
 	var rowLength = Math.floor((groupBox.offsetWidth - groupMargin) / tabWidth);
-	var rows = Math.ceil(list.groupList.length / rowLength);
+	var rows = Math.ceil(data.groups.length / rowLength);
 	var pageBox = document.getElementById('pageBox');
 
 	if (activeGroup.pageList.length > 0){
@@ -386,7 +386,7 @@ function createPages(activeGroup, imgList){
 
 /*
  * Creates an html block to hold the thumbnail, and title.
- * Adds the appropriate listeners to enable dragging and reordering.
+ * Adds the appropriate dataeners to enable dragging and reordering.
  */
 function createPageBlock(){
 	var block = document.createElement('div');
@@ -534,18 +534,18 @@ function createOpenAllButton(expand){
 
 
 
-function getActiveGroup(list){
-	for (var i = 0; i < list.groupList.length; i++){
-		var aGroup = list.groupList[i];
+function getActiveGroup(data){
+	for (var i = 0; i < data.groups.length; i++){
+		var aGroup = data.groups[i];
 		if (aGroup.active == true){
 			return aGroup;
 		}
 	}
-	setActiveGroup(list.groupList.length - 1, list);
-	return list.groupList[list.groupList.length - 1];
+	setActiveGroup(data.groups.length - 1, data);
+	return data.groups[data.groups.length - 1];
 }
 
-function checkAllTabs(list){
+function checkAllTabs(data){
 	chrome.tabs.query({currentWindow: true}, function(tabs){
 		var onlyTab = true;
 		for (var i = 0; i < tabs.length; i++){
@@ -557,9 +557,9 @@ function checkAllTabs(list){
 			}
 		}
 		if (onlyTab === true){
-			chrome.storage.local.set({'undoObj' : {'index': 0, 'list': []}});
+			chrome.storage.local.set({'undoObj' : {'index': 0, 'data': []}});
 		}
-		takeSnapShot(list);
+		//takeSnapShot(data);
 	});
 }
 

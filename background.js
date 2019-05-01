@@ -4,28 +4,28 @@ main();
 function main(){
 	// Add groupListeners that recieve messages from popup.js  to save one or all pages.
 	chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
-		chrome.storage.local.get('groups', function(list){
+		chrome.storage.local.get('groups', function(data){
 			if (request.onePage !== undefined){
-				group = getExistingGroup(request.onePage, list);
+				group = getExistingGroup(request.onePage, data);
 				isNew = group === null;
 
 				if (group === null){
-					group = getNewGroup(request.onePage, list);
+					group = getNewGroup(request.onePage, data);
 				}
 				
-				setActiveGroup(group, list);
-				storeOnePage(group, list, isNew);
+				setActiveGroup(group, data);
+				storeOnePage(group, data, isNew);
 			} else if (request.allPages !== undefined){
-				group = getExistingGroup(request.allPages, list);
+				group = getExistingGroup(request.allPages, data);
 				isNew = group === null;
 
 				if (group === null){
-					group = getNewGroup(request.allPages, list);
+					group = getNewGroup(request.allPages, data);
 				}
 
-				setActiveGroup(group, list);
-				chrome.tabs.query({currentWindow: true}, function(theTabs){
-					storeAllPages(group, 0, theTabs, list, isNew)
+				setActiveGroup(group, data);
+				chrome.tabs.query({currentWindow: true}, function(tabData){
+					storeAllPages(0, group, tabData, data, isNew);
 				})
 			}
 		})
@@ -46,14 +46,13 @@ function main(){
 	})
 }
 
-
-function getExistingGroup(name, list){
-	if (list.groups === undefined){
-		list.groups = [];
+function getExistingGroup(name, data){
+	if (data.groups === undefined){
+		data.groups = [];
 	}
 
-	for (var i = 0; i < list.groups.length; i++){
-		var aGroup = list.groups[i];
+	for (var i = 0; i < data.groups.length; i++){
+		var aGroup = data.groups[i];
 		if (name === aGroup.name){
 			return aGroup;
 		}
@@ -61,20 +60,20 @@ function getExistingGroup(name, list){
 	return null;
 }
 
-function getNewGroup(name, list){
+function getNewGroup(name, data){
 	aGroup = {
 		'id': (new Date()).getTime().toString(),
 		'name': name,
 		'active': true,
 		'pageList': []
 	}
-	list.groups.push(aGroup);
+	data.groups.push(aGroup);
 	return aGroup;
 }
 
-function setActiveGroup(group, list){
-	for (var i = 0; i < list.groups.length; i++){
-		var aGroup = list.groups[i];
+function setActiveGroup(group, data){
+	for (var i = 0; i < data.groups.length; i++){
+		var aGroup = data.groups[i];
 		if (aGroup === group){
 			aGroup.active = true;
 		} else {
@@ -82,11 +81,8 @@ function setActiveGroup(group, list){
 		}
 	}
 }
-	
 
-/***************STORE ONE PAGE START****************/
-
-function storeOnePage(activeGroup, list, newGroup) {
+function storeOnePage(activeGroup, data, newGroup) {
 	chrome.tabs.query({active:true, currentWindow: true}, function(tabs){
 		page = getPage(activeGroup, tabs[0].url);
 
@@ -98,7 +94,6 @@ function storeOnePage(activeGroup, list, newGroup) {
 			}
 		} else {
 			page = {
-				'groupID': activeGroup.id,
 				'url': tabs[0].url,
 				'title': tabs[0].title,
 				'scroll': 0,
@@ -107,8 +102,40 @@ function storeOnePage(activeGroup, list, newGroup) {
 			activeGroup.pageList.push(page);
 		}
 
-		capturePage(activeGroup, page, list, newGroup);
-	})
+		capturePage(activeGroup, page, data, newGroup);
+	});
+}
+
+function storeAllPages(index, activeGroup, tabData, data, newGroup){
+	if (index === tabData.length){
+		sendRedraw();
+		return;
+	} else {
+		console.log(index);
+		chrome.tabs.update(tabData[index].id, {active: true}, function() {
+			chrome.tabs.captureVisibleTab(chrome.windows.WINDOW_ID_CURRENT, {}, function(img){
+				if (chrome.extension.lastError){
+
+				}
+				var image = new Image();
+				image.src = img;
+
+				var newTab = {
+					'url': tabData[index].url,
+					'title': tabData[index].title,
+					'scroll': 0,
+					'img': scaleImage(image)
+				}
+
+				activeGroup.pageList.push(newTab);
+
+				chrome.storage.local.set({'groups': data.groups}, function() {
+					console.log(data.groups);
+					storeAllPages(index++, activeGroup, tabData, data, newGroup);
+				});
+			});
+		});
+	}
 }
 
 function getPage(activeGroup, url){
@@ -120,171 +147,27 @@ function getPage(activeGroup, url){
 	return null;
 }
 
-function capturePage(activeGroup, page, list, newGroup){
+function capturePage(activeGroup, page, data, newGroup){
 	chrome.tabs.captureVisibleTab(chrome.windows.WINDOW_ID_CURRENT, {}, function(img){
 		var image = new Image();
 		image.src = img;
 
 		image.onload = function() {
 			page.img = scaleImage(image);
-			chrome.storage.local.set({'groups': list.groups}, function() {
+			chrome.storage.local.set({'groups': data.groups}, function() {
 				sendRedraw();
+
+				// Create snapshot for undo/redo
 				var lostImg = createLostImage(
 					'add',
 					activeGroup.id,
 					newGroup,
 					[{'img': image, 'url': page.url}]
 				)
-				takeSnapShot(list,lostImg);
+				//takeSnapShot(data,lostImg);
 			});
 		}
 	})
-}
-
-/***************STORE ONE PAGE END****************/
-
-
-
-
-/***************STORE ALL PAGES START****************/
-
-var activeTab;
-
-function storeAllPages(activeGroup, index, tabs, groupList, newGroup){
-	if (index === tabs.length){
-		chrome.storage.local.get(activeGroup.id, function(imgList){
-			if (imgList[activeGroup.id] === undefined){
-				imgList[activeGroup.id] = [];
-			}
-			var lostImg = createLostImage(
-				'add',
-				activeGroup.id,
-				newGroup,
-				[]
-			)
-			storeAllImages(0, activeGroup, tabs, imgList, groupList, lostImg);
-		})
-		return;
-	}
-
-	var tab = tabs[index];
-	if (tab.active){
-		activeTab = tab;
-	}
-	if (checkForDuplicates(activeGroup.pageList, tab.url)){
-		index++;
-		storeAllPages(activeGroup, index, tabs, groupList, newGroup);
-		return;
-	}
-	var data = {
-		'url': tab.url,
-		'title': tab.title,
-		'scroll': 0 
-	}
-	activeGroup.pageList.push(data);
-	storeAllPages(activeGroup, index++, tabs, groupList, newGroup);
-/*
-	chrome.tabs.sendMessage(tab.id, {page: 'getScroll'}, function(response){
-		var scroll = response === undefined ? 0 : response.scroll;
-		var data = {
-			'url': tab.url,
-			'title': tab.title,
-			'scroll': scroll
-		}
-		activeGroup.pageList.push(data);
-		storeAllPages(activeGroup, index++, tabs, groupList, newGroup);
-	})
-*/
-}
-
-function storeAllImages(index, activeGroup, tabList, imgList, groupList, lostImg){
-	if (index >= tabList.length){
-		if (activeTab !== undefined){
-			chrome.tabs.update(activeTab.id, {active: true});
-		}
-		chrome.storage.local.set(imgList, function(){
-			chrome.storage.local.set(groupList, function(){
-				sendRedraw();
-				takeSnapShot(groupList, lostImg);
-			})
-		})
-		return;
-	}
-
-	var tab = tabList[index];
-	chrome.tabs.update(tab.id, {active:true}, function(){
-		if (tab.url.substring(0,9) === 'chrome://'){
-			storeAllImages(index+1, activeGroup, tabList, imgList, groupList, lostImg);
-			return;
-		}
-
-		var storedList = imgList[activeGroup.id];
-		for (var i = 0; i < storedList.length; i++){
-			var imgObj = storedList[i];
-			if (imgObj.url === tab.url){
-				if (imgObj.img === '/images/missingImg.jpg'){
-					storedList.splice(i, 1);
-					captureAllTabs(index, activeGroup, tabList, imgList, groupList, lostImg)
-					return;
-				} else {
-					storeAllImages(index+1, activeGroup, tabList, imgList, groupList, lostImg);
-					return;
-				}
-			}
-		}
-		captureAllTabs(index, activeGroup, tabList, imgList, groupList, lostImg);
-	});
-}
-
-function captureAllTabs (index, activeGroup, tabList, imgList, groupList, lostImg){
-	var tab = tabList[index];
-	chrome.tabs.captureVisibleTab(chrome.windows.WINDOW_ID_CURRENT, {}, function(img){
-		if (chrome.extension.lastError){
-			var imgObj = {'url': tab.url, 'img': '/images/missingImg.jpg'};
-			imgList[activeGroup.id].push(imgObj);
-			lostImg.imgData.push(imgObj);
-			storeAllImages(index+1, activeGroup, tabList, imgList, groupList, lostImg);
-			return;
-		}
-		var image = new Image();
-		image.src = img;
-
-		image.onload = function() {
-			var newImg = scaleImage(image);
-			var imgObj = {'url': tab.url, 'img': newImg};
-			imgList[activeGroup.id].push(imgObj);
-			lostImg.imgData.push(imgObj);
-			storeAllImages(index+1, activeGroup, tabList, imgList, groupList, lostImg);
-		}
-	});	
-}
-/***************STORE ALL PAGES END****************/
-
-
-function checkForDuplicates(pageList, url){
-	if (url.substring(0,9) == 'chrome://' || url.substring(0,19) == 'chrome-extension://'){
-		return true;
-	}
-
-	for(var i = 0; i < pageList.length; i++){
-		var page = pageList[i];
-		var aUrl = page['url'];
-		if (aUrl === url){
-			return true;
-		}
-	}
-	return false;
-}
-
-function checkMissingImg(activeGroup, url){
-	for (var i = 0; i < activeGroup.pageList.length; i++){
-		var page = activeGroup.pageList[i];
-		if (page.url === url && page.img === '/images/missingImg.jpg'){
-			activeGroup.pageList[i].img = undefined;
-			return true;
-		} 
-	}
-	return false;
 }
 
 /*
@@ -335,14 +218,15 @@ function createLostImage(action, id, newGroup, imgData){
 /*
 * Stores a snapshot of the current values for undo and redo
 */
-function takeSnapShot(list, lostImg){
+// TODO update this!
+function takeSnapShot(data, lostImg){
 	chrome.storage.local.get('undoObj', function(data){
 		var undoObj = data.undoObj === undefined ? {'index': 0, 'groupList': []} : data.undoObj;
 
 		if (undoObj.index < undoObj.groupList.length - 1){
 			undoObj.groupList.splice(undoObj.index + 1);
 		}
-		var grpList = list.groups;
+		var grpList = data.groups;
 		var snapShot = [];
 		for (var i = 0; i < grpList.length; i++){
 			var group = grpList[i];
