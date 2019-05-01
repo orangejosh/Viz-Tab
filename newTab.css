@@ -274,14 +274,14 @@ label input {
 }
 
 .preview {
-	border: 1px solid grey;
+	border: 2px solid grey;
 	overflow: hidden;
 	box-sizing: border-box;
 	cursor: pointer;	
 }
 
 .preview:hover {
-	border: 2px solid grey;
+	border: 2px solid black;
 }
 
 .closeButton {

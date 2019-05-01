@@ -421,13 +421,7 @@ function createPreview(page, block, img){
 	link.appendChild(image);
 	link.draggable = false;
 	link.addEventListener('click', function(){
-		var scrollObj = {
-			url: page.url,
-			scroll: page.scroll
-		}
-		chrome.storage.local.set({'pages': [scrollObj]}, function (){
-			window.open(page.url, "_self");
-		})
+		window.open(page.url, "_self");
 	});
 
 	return link;
