@@ -1,5 +1,6 @@
 body {
 	width:125px;
+	background: rgba(234,73,161,1);
 }
 
 body button {
@@ -22,7 +23,7 @@ body button {
 
 #groupList {
 	width:100%;
-	background: rgba(255,255,255,1);
+	background: rgba(234,73,161,1);
 	border-radius: 5px;
 	border-width: 1px;
 	border-color: rgba(0,0,0,1);
@@ -31,7 +32,7 @@ body button {
 #groupName {
 	display:none;
 	width:100%;
-	background: transparent;
+	background: rgba(200,200,200,1);
 }
 
 .toggleLabel {
@@ -53,6 +54,11 @@ body button {
 
 #tabSwitch {
     width:100%;
+}
+
+label {
+	display: block;
+	height: 100%
 }
 
 label input {
