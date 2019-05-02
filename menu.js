@@ -2,6 +2,10 @@
 
 
 function undo() {
+	chrome.runtime.sendMessage({undo: 'undo'});
+
+
+
 	chrome.storage.local.get('undoObj', function(data){
 		if (data.undoObj === undefined){
 			data.undoObj = {'index': 0, 'list': []};

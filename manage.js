@@ -66,7 +66,7 @@ function switchGroup(id){
 			clearPage();
 			buildPages(data);
 			toggleGroupRows();
-			//takeSnapShot(data);
+			chrome.runtime.sendMessage({save: 'save'});
 			redrawPage();
 		})
 	})
@@ -95,7 +95,7 @@ function saveGroupName(name){
 				data.groups[i].name = name;
 				chrome.storage.local.set(data, function() {
 					rebuildPage(data);
-//					takeSnapShot(data);
+					chrome.runtime.sendMessage({save: 'save'});
 					redrawPage();
 				});
 				return;
@@ -163,7 +163,7 @@ function saveNewGroupOrder(){
 		}
 		data.groups = newGroupOrder;
 		chrome.storage.local.set(data, function(){
-//			takeSnapShot(data);
+			chrome.runtime.sendMessage({save: 'save'});
 			redrawPage();
 		});
 	});
@@ -174,13 +174,13 @@ function closeGroup(groupName){
 		for (var i = 0; i < data.groups.length; i++){
 			var group = data.groups[i];
 			if (group.name === groupName){
-				var removeGroup = data.groups.splice(i, 1);
-//				var remGrpID = removeGroup[0].id;
+				data.groups.splice(i, 1);
 				if (group.active === true){
 					setActiveIndex(i, data);
 				}
 
 				chrome.storage.local.set(data, function(){
+					chrome.runtime.sendMessage({save: 'save'});
 					redrawPage();
 				});
 				break;
@@ -216,7 +216,7 @@ function reGroupPage(page, target) {
 		targetGroup.pageList.push(pageObj);
 
 		chrome.storage.local.set(data, function(){
-//			takeSnapShot(data);
+			chrome.runtime.sendMessage({save: 'save'});
 			redrawPage();
 		});
 	});
@@ -239,7 +239,7 @@ function savePageName(newName, url){
 				page.title = newName;
 				chrome.storage.local.set(data, function(){
 					rebuildPage(data);
-					//takeSnapShot(data);
+					chrome.runtime.sendMessage({save: 'save'});
 					redrawPage();
 				});
 			}
@@ -278,7 +278,7 @@ function saveNewPageOrder(){
 		}
 		activeGroup.pageList = newPageList;
 		chrome.storage.local.set(data, function(){
-//			takeSnapShot(data);
+			chrome.runtime.sendMessage({save: 'save'});
 			redrawPage();
 		});
 	})
@@ -297,7 +297,7 @@ function closePage(id){
 
 				activeGroup.pageList.splice(i, 1);
 				chrome.storage.local.set(data, function(){
-//					takeSnapShot(list, imgObj);
+					chrome.runtime.sendMessage({save: 'save'});
 					redrawPage();
 				});
 				return;
@@ -356,54 +356,6 @@ function clearPage(){
 	if (openAll !== null){
 		openAll.parentNode.removeChild(openAll);
 	}
-}
-
-function createLostImage(action, groupID, newGroup, imgData, newGroupID){
-	var imgObj = {
-		'action': action,
-		'id': groupID,
-		'newGroup': newGroup,
-		'imgData': imgData,
-		'newID': newGroupID
-	}
-	return imgObj;
-}
-
-function takeSnapShot(list, img){
-	chrome.storage.local.get('undoObj', function(data){
-		var undoObj = data.undoObj === undefined ? {'index': 0, 'list': []} : data.undoObj;
-
-		if (undoObj.index < undoObj.list.length - 1){
-			undoObj.list.splice(undoObj.index + 1);
-		}
-		var grpList = list.groupList;
-		var snapShot = [];
-		for (var i = 0; i < grpList.length; i++){
-			var group = grpList[i];
-			var groupCopy = {
-				'id': group.id,
-				'name': group.name, 
-				'active': group.active,
-				'pageList': []
-			};
-			for (var j = 0; j < group.pageList.length; j++){
-				var page = group.pageList[j];
-				var pageCopy = {
-					'title': page.title,
-					'url': page.url,
-					'scroll': page.scroll
-				}
-				groupCopy.pageList.push(pageCopy);
-			}
-			snapShot.push(groupCopy);
-		}
-		var addObj = {'snapshot': snapShot, 'lostImgs': img};
-		undoObj.list.push(addObj);
-		undoObj.index = undoObj.list.length - 1;
-		data.undoObj = undoObj;
-
-		chrome.storage.local.set(data);
-	})
 }
 
 function checkSameName(name, list){

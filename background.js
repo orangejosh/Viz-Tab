@@ -1,37 +1,14 @@
 
-main();
+var undoObj = {'index': 0, 'undoList': []};
 
 function main(){
-	// Add groupListeners that recieve messages from popup.js  to save one or all pages.
-	chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
-		chrome.storage.local.get('groups', function(data){
-			if (request.onePage !== undefined){
-				group = getExistingGroup(request.onePage, data);
-				isNew = group === null;
+	// Initialize undoObj with current groups
+	chrome.storage.local.get('groups', function(data){
+		undoObj.undoList.push(data);
+	});
 
-				if (group === null){
-					group = getNewGroup(request.onePage, data);
-				}
-				
-				setActiveGroup(group, data);
-				storeOnePage(group, data, isNew);
-			} else if (request.allPages !== undefined){
-				group = getExistingGroup(request.allPages, data);
-				isNew = group === null;
 
-				if (group === null){
-					group = getNewGroup(request.allPages, data);
-				}
-
-				setActiveGroup(group, data);
-				chrome.tabs.query({currentWindow: true}, function(tabData){
-					storeAllPages(0, group, tabData, data, isNew);
-				})
-			}
-		})
-		sendResponse({complete: 'true'});
-	})
-
+	// Listener to override newTab with Viz-Tab, if enabled
 	chrome.tabs.onCreated.addListener(function(tab) {
 		if (tab.url === "chrome://newtab/"){
 			chrome.storage.local.get('newTab', function(data){
@@ -39,11 +16,48 @@ function main(){
 				if (newTabOn){
 					chrome.tabs.update(tab.id, {
 						url: chrome.extension.getURL("newTab.html")
-					})
+					});
 				}
-			})
+			});
 		}
-	})
+	});
+
+	// Initialize listener that recieve messages from popup.js or menu.js to save one or all pages.
+	chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
+		if (request.undo !== undefined){
+			console.log('undo');
+		} else if (request.redo !== undefined){
+			console.log('redo');
+		} else if (request.save !== undefined){
+			console.log('snapShot');
+			chrome.storage.local.get('groups', function(data){
+				takeSnapShot(data);
+			});
+		} else if (request.onePage !== undefined){
+			group = getExistingGroup(request.onePage, data);
+			isNew = group === null;
+
+			if (group === null){
+				group = getNewGroup(request.onePage, data);
+			}
+			
+			setActiveGroup(group, data);
+			storeOnePage(group, data, isNew);
+		} else if (request.allPages !== undefined){
+			group = getExistingGroup(request.allPages, data);
+			isNew = group === null;
+
+			if (group === null){
+				group = getNewGroup(request.allPages, data);
+			}
+
+			setActiveGroup(group, data);
+			chrome.tabs.query({currentWindow: true}, function(tabData){
+				storeAllPages(0, group, tabData, data, isNew);
+			});
+		}
+		sendResponse({complete: 'true'});
+	});
 }
 
 function getExistingGroup(name, data){
@@ -108,6 +122,7 @@ function storeOnePage(activeGroup, data, newGroup) {
 
 function storeAllPages(index, activeGroup, tabData, data, newGroup){
 	if (index === tabData.length){
+		takeSnapShot(data);
 		sendRedraw();
 		return;
 	} else {
@@ -177,7 +192,7 @@ function capturePage(activeGroup, page, data, newGroup){
 					newGroup,
 					[{'img': image, 'url': page.url}]
 				)
-				//takeSnapShot(data,lostImg);
+				takeSnapShot(data);
 			});
 		}
 	})
@@ -218,56 +233,13 @@ function sendRedraw(){
 	})
 }
 
-function createLostImage(action, id, newGroup, imgData){
-	var imgObj = {
-		'action': action,
-		'id': id,
-		'newGroup': newGroup,
-		'imgData': imgData
-	}
-	return imgObj;
-}
-
 /*
 * Stores a snapshot of the current values for undo and redo
 */
-// TODO update this!
-function takeSnapShot(data, lostImg){
-	chrome.storage.local.get('undoObj', function(data){
-		var undoObj = data.undoObj === undefined ? {'index': 0, 'groupList': []} : data.undoObj;
-
-		if (undoObj.index < undoObj.groupList.length - 1){
-			undoObj.groupList.splice(undoObj.index + 1);
-		}
-		var grpList = data.groups;
-		var snapShot = [];
-		for (var i = 0; i < grpList.length; i++){
-			var group = grpList[i];
-			var groupCopy = {
-				'id': group.id,
-				'name': group.name, 
-				'active': group.active,
-				'pageList': []
-			};
-			for (var j = 0; j < group.pageList.length; j++){
-				var page = group.pageList[j];
-				var pageCopy = {
-					'title': page.title,
-					'url': page.url,
-					'scroll': page.scroll
-				}
-				groupCopy.pageList.push(pageCopy);
-			}
-			snapShot.push(groupCopy);
-		}
-		var addObj = {'snapshot': snapShot, 'lostImgs': lostImg};
-		undoObj.groupList.push(addObj);
-		undoObj.index = undoObj.groupList.length - 1;
-		data.undoObj = undoObj;
-
-		chrome.storage.local.set(data);
-	})
+function takeSnapShot(data){
+	undoObj.index++;
+	undoObj.undoList.push(data);
+	console.log(undoObj);
 }
 
-
-
+main();
