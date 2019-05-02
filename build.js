@@ -34,7 +34,6 @@ function init() {
 		buildMenu();
 		buildGroups(data);
 		buildPages(data);
-		checkAllTabs(data);
 	});
 
 	document.body.addEventListener('keydown', function(e){
@@ -520,24 +519,6 @@ function getActiveGroup(data){
 	}
 	setActiveGroup(data.groups.length - 1, data);
 	return data.groups[data.groups.length - 1];
-}
-
-function checkAllTabs(data){
-	chrome.tabs.query({currentWindow: true}, function(tabs){
-		var onlyTab = true;
-		for (var i = 0; i < tabs.length; i++){
-			var tab = tabs[i];
-			var name = tab.url.substr(0,15);
-			if (name === 'chrome://newtab' && tab.active === false){
-				onlyTab = false;
-				break;
-			}
-		}
-		if (onlyTab === true){
-			chrome.storage.local.set({'undoObj' : {'index': 0, 'data': []}});
-		}
-		//takeSnapShot(data);
-	});
 }
 
 /*

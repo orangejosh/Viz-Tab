@@ -24,39 +24,62 @@ function main(){
 
 	// Initialize listener that recieve messages from popup.js or menu.js to save one or all pages.
 	chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
-		if (request.undo !== undefined){
-			console.log('undo');
-		} else if (request.redo !== undefined){
-			console.log('redo');
-		} else if (request.save !== undefined){
-			console.log('snapShot');
-			chrome.storage.local.get('groups', function(data){
+		chrome.storage.local.get('groups', function (data) {
+			if (request.undo !== undefined){
+				undo();
+			} else if (request.redo !== undefined){
+				redo();
+			} else if (request.save !== undefined){
 				takeSnapShot(data);
-			});
-		} else if (request.onePage !== undefined){
-			group = getExistingGroup(request.onePage, data);
-			isNew = group === null;
+			} else if (request.onePage !== undefined){
+				var group = getExistingGroup(request.onePage, data);
+				isNew = group === null;
 
-			if (group === null){
-				group = getNewGroup(request.onePage, data);
+				if (group === null){
+					group = getNewGroup(request.onePage, data);
+				}
+				
+				setActiveGroup(group, data);
+				storeOnePage(group, data, isNew);
+			} else if (request.allPages !== undefined){
+				var group = getExistingGroup(request.allPages, data);
+				isNew = group === null;
+
+				if (group === null){
+					group = getNewGroup(request.allPages, data);
+				}
+
+				setActiveGroup(group, data);
+				chrome.tabs.query({currentWindow: true}, function(tabData){
+					storeAllPages(0, group, tabData, data, isNew);
+				});
 			}
-			
-			setActiveGroup(group, data);
-			storeOnePage(group, data, isNew);
-		} else if (request.allPages !== undefined){
-			group = getExistingGroup(request.allPages, data);
-			isNew = group === null;
+			sendResponse({complete: 'true'});
+		});
+	});
+}
 
-			if (group === null){
-				group = getNewGroup(request.allPages, data);
-			}
+// For some reason this doesn't work at the very beginning of a session
+function undo(){
+	undoObj.index--;
+	if (undoObj.index < 0){
+		undoObj.index = 0;
+	}
 
-			setActiveGroup(group, data);
-			chrome.tabs.query({currentWindow: true}, function(tabData){
-				storeAllPages(0, group, tabData, data, isNew);
-			});
-		}
-		sendResponse({complete: 'true'});
+	data = undoObj.undoList[undoObj.index];
+	chrome.storage.local.set({'groups': data.groups}, function() {
+		sendRedraw();
+	});
+}
+
+function redo(){
+	undoObj.index++;
+	if (undoObj.index >= undoObj.undoList.length){
+		undoObj.index = undoObj.undoList.length - 1;
+	}
+	data = undoObj.undoList[undoObj.index];
+	chrome.storage.local.set({'groups': data.groups}, function() {
+		sendRedraw();
 	});
 }
 
@@ -184,14 +207,6 @@ function capturePage(activeGroup, page, data, newGroup){
 			page.img = scaleImage(image);
 			chrome.storage.local.set({'groups': data.groups}, function() {
 				sendRedraw();
-
-				// Create snapshot for undo/redo
-				var lostImg = createLostImage(
-					'add',
-					activeGroup.id,
-					newGroup,
-					[{'img': image, 'url': page.url}]
-				)
 				takeSnapShot(data);
 			});
 		}
@@ -237,9 +252,11 @@ function sendRedraw(){
 * Stores a snapshot of the current values for undo and redo
 */
 function takeSnapShot(data){
+	if (undoObj.index < undoObj.undoList.length - 1){
+		undoObj.undoList.splice(undoObj.index + 1);
+	}
 	undoObj.index++;
 	undoObj.undoList.push(data);
-	console.log(undoObj);
 }
 
 main();
