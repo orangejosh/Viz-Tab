@@ -3,10 +3,14 @@
  *
  * This runs when chrome is opened. Adds listeners to handle messages
  * from content scripts. Handles saving of the tabs data into chromes
- * local storage. The format of the data is as follows:
+ * local storage. The structure of the data is as follows:
  *
  * Object 
- * 		groups (an array of groups)
+ * 		toggle: (save one tab or all tabs)
+ *		groupToggle: (collapse multiple rows of groups)
+ *		newTab: (override the new tab with Viz-Tab)
+ *
+ * 		group objects (an array of groups)
  * 			active: (is this the active group)
  * 			id: (id of group)
  * 			name: (name of group)
@@ -15,19 +19,19 @@
  *				title:
  *				url:
  *				img:
- * 		toggle (save one tab or all tabs)
  *
 /**************************************************************************/
 
 
-var undoObj = {'index': 0, 'undoList': []};
+var undoObj = {'index': 0, 'history': []};
+var MAX_UNDO = 20;
 
 main();
 
 function main(){
 	// Initialize undoObj with current groups
 	chrome.storage.local.get('groups', function(data){
-		undoObj.undoList.push(data);
+		undoObj.history.push(data);
 	});
 
 
@@ -44,7 +48,7 @@ function main(){
 	});
 
 	// Listener that recieves messages to execute undo, redo, 
-	// save present state, saves one tab, or saves all tabs.
+	// save state, save one tab, or save all tabs.
 	chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
 		chrome.storage.local.get('groups', function (data) {
 			if (request.undo !== undefined){
@@ -69,7 +73,7 @@ function undo(){
 		undoObj.index = 0;
 	}
 
-	data = undoObj.undoList[undoObj.index];
+	data = undoObj.history[undoObj.index];
 	chrome.storage.local.set({'groups': data.groups}, function() {
 		sendRedraw();
 	});
@@ -77,10 +81,10 @@ function undo(){
 
 function redo(){
 	undoObj.index++;
-	if (undoObj.index >= undoObj.undoList.length){
-		undoObj.index = undoObj.undoList.length - 1;
+	if (undoObj.index >= undoObj.history.length){
+		undoObj.index = undoObj.history.length - 1;
 	}
-	data = undoObj.undoList[undoObj.index];
+	data = undoObj.history[undoObj.index];
 	chrome.storage.local.set({'groups': data.groups}, function() {
 		sendRedraw();
 	});
@@ -90,11 +94,15 @@ function redo(){
  * Save the present state of viz-tab for undo/redo
  */
 function takeSnapShot(data){
-	if (undoObj.index < undoObj.undoList.length - 1){
-		undoObj.undoList.splice(undoObj.index + 1);
+	if (undoObj.index < undoObj.history.length - 1){
+		undoObj.history.splice(undoObj.index + 1);
+	}
+	if (undoObj.history.length > MAX_UNDO){
+		undoObj.history.shift();
+		undoObj.index--;
 	}
 	undoObj.index++;
-	undoObj.undoList.push(data);
+	undoObj.history.push(data);
 }
 
 /*
@@ -106,7 +114,6 @@ function saveTabs(name, data, allTabs){
 	if (group === null){
 		group = getNewGroup(name, data);
 	}
-	
 	setActiveGroup(group, data);
 
 	if (allTabs){
@@ -124,6 +131,7 @@ function saveTabs(name, data, allTabs){
 function getExistingGroup(name, data){
 	if (data.groups === undefined){
 		data.groups = [];
+		return null;
 	}
 
 	for (var i = 0; i < data.groups.length; i++){
@@ -145,7 +153,7 @@ function getNewGroup(name, data){
 	data.groups.push(aGroup);
 	return aGroup;
 }
-
+	
 function setActiveGroup(group, data){
 	for (var i = 0; i < data.groups.length; i++){
 		var aGroup = data.groups[i];
