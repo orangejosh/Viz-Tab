@@ -1,4 +1,10 @@
-
+/**************************************************************************
+ * menu.js
+ *
+ * This handles the options in the menu of Viz-Tab. Sends messages to
+ * background.js for undo and redo. It also creates the help page.
+ *
+/**************************************************************************/
 
 
 function undo() {

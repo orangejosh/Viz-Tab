@@ -2,22 +2,8 @@
  * build.js
  *
  * This runs when a Viz-Tab tab is opened. It retrieves
- * the saved groups and pages and builds a webpage from
- * that saved info. The saved data is in the format:
- *
- * Object 
- * 		groups (an array of groups)
- * 			active: (is this the active group)
- * 			id: (id of group)
- * 			name: (name of group)
- * 			pageList (an array of pages)
- *				scroll:
- *				title:
- *				url:
-				img:
- * 		newTab
- * 		toggle
- * 		undoObj
+ * the saved groups and pages from chrome storage. It then 
+ * builds a webpage from that saved data. 
  *
 /**************************************************************************/
 
@@ -27,6 +13,7 @@ var tabWidth = 144;
 document.onload = init();
 
 function init() {
+	// Builds the page
 	chrome.storage.local.get('groups', function (data){
 		if (data.groups === undefined){
 			data.groups = [];
@@ -36,6 +23,7 @@ function init() {
 		buildPages(data);
 	});
 
+	// Listens for the arrow key presses that navigate groups
 	document.body.addEventListener('keydown', function(e){
 		var key = e.which || e.keyCode;
 		if (key >= 37 && key <= 40){
@@ -43,6 +31,7 @@ function init() {
 		}
 	});
 
+	// DEBUGGING BUTTON: Displays the saved data from chrome storage
 	var button = document.createElement('button');
 	button.addEventListener('click', function(){
 		chrome.storage.local.get(null, function(data){
@@ -130,7 +119,7 @@ function buildGroups(data){
 
 /*
  * Creates an html tab for the group and adds the appropriate
- * dataeners to drag, reorder, etc.
+ * listeners to drag, reorder, etc.
  */
 function createTab(group){
 	var tab = document.createElement('div');
@@ -281,7 +270,6 @@ function createTabExpandButton(){
 		toggleGroupRows();
 	})	
 }
-
 
 /**************Build Tabs End ******************/
 

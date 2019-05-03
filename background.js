@@ -1,5 +1,28 @@
+/**************************************************************************
+ * backgroud.js
+ *
+ * This runs when chrome is opened. Adds listeners to handle messages
+ * from content scripts. Handles saving of the tabs data into chromes
+ * local storage. The format of the data is as follows:
+ *
+ * Object 
+ * 		groups (an array of groups)
+ * 			active: (is this the active group)
+ * 			id: (id of group)
+ * 			name: (name of group)
+ * 			pageList (an array of pages)
+ *				scroll:
+ *				title:
+ *				url:
+ *				img:
+ * 		toggle (save one tab or all tabs)
+ *
+/**************************************************************************/
+
 
 var undoObj = {'index': 0, 'undoList': []};
+
+main();
 
 function main(){
 	// Initialize undoObj with current groups
@@ -14,15 +37,14 @@ function main(){
 			chrome.storage.local.get('newTab', function(data){
 				var newTabOn = data.newTab !== undefined && data.newTab === true;
 				if (newTabOn){
-					chrome.tabs.update(tab.id, {
-						url: chrome.extension.getURL("newTab.html")
-					});
+					chrome.tabs.update(tab.id, {url: chrome.extension.getURL("newTab.html")});
 				}
 			});
 		}
 	});
 
-	// Initialize listener that recieve messages from popup.js or menu.js to save one or all pages.
+	// Listener that recieves messages to execute undo, redo, 
+	// save present state, saves one tab, or saves all tabs.
 	chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
 		chrome.storage.local.get('groups', function (data) {
 			if (request.undo !== undefined){
@@ -32,34 +54,15 @@ function main(){
 			} else if (request.save !== undefined){
 				takeSnapShot(data);
 			} else if (request.onePage !== undefined){
-				var group = getExistingGroup(request.onePage, data);
-				isNew = group === null;
-
-				if (group === null){
-					group = getNewGroup(request.onePage, data);
-				}
-				
-				setActiveGroup(group, data);
-				storeOnePage(group, data, isNew);
+				saveTabs(request.onePage, data, false);
 			} else if (request.allPages !== undefined){
-				var group = getExistingGroup(request.allPages, data);
-				isNew = group === null;
-
-				if (group === null){
-					group = getNewGroup(request.allPages, data);
-				}
-
-				setActiveGroup(group, data);
-				chrome.tabs.query({currentWindow: true}, function(tabData){
-					storeAllPages(0, group, tabData, data, isNew);
-				});
+				saveTabs(request.allPages, data, true);
 			}
 			sendResponse({complete: 'true'});
 		});
 	});
 }
 
-// For some reason this doesn't work at the very beginning of a session
 function undo(){
 	undoObj.index--;
 	if (undoObj.index < 0){
@@ -83,6 +86,41 @@ function redo(){
 	});
 }
 
+/*
+ * Save the present state of viz-tab for undo/redo
+ */
+function takeSnapShot(data){
+	if (undoObj.index < undoObj.undoList.length - 1){
+		undoObj.undoList.splice(undoObj.index + 1);
+	}
+	undoObj.index++;
+	undoObj.undoList.push(data);
+}
+
+/*
+ * Save either one tab or all the tabs into the group 'name'
+ */
+function saveTabs(name, data, allTabs){
+	var group = getExistingGroup(name, data);
+
+	if (group === null){
+		group = getNewGroup(name, data);
+	}
+	
+	setActiveGroup(group, data);
+
+	if (allTabs){
+		chrome.tabs.query({currentWindow: true}, function(tabData){
+			storeAllPages(0, group, tabData, data);
+		});
+	} else {
+		storeOnePage(group, data);
+	}
+}
+
+/*
+ * Returns a group with arg 'name' or null if not present
+ */
 function getExistingGroup(name, data){
 	if (data.groups === undefined){
 		data.groups = [];
@@ -119,9 +157,13 @@ function setActiveGroup(group, data){
 	}
 }
 
-function storeOnePage(activeGroup, data, newGroup) {
+/*
+ * Gets the active tab, checks to make sure the active tab is not viz-tab, checks to make sure
+ * that the active tab is not already saved, creats a new page, and captures the data from it.
+ */
+function storeOnePage(activeGroup, data) {
 	chrome.tabs.query({active:true, currentWindow: true}, function(tabs){
-		if (tabs[0].url.substring(0,9) == 'chrome://' || tabs[0].url.substring(0,19) == 'chrome-extension://'){
+		if (tabs[0].url.substring(0,19) == 'chrome-extension://'){
 			return;
 		}
 
@@ -139,11 +181,26 @@ function storeOnePage(activeGroup, data, newGroup) {
 			activeGroup.pageList.push(page);
 		}
 
-		capturePage(activeGroup, page, data, newGroup);
+		chrome.tabs.captureVisibleTab(chrome.windows.WINDOW_ID_CURRENT, {}, function(img){
+			var image = new Image();
+			image.src = img;
+
+			image.onload = function() {
+				page.img = scaleImage(image);
+				chrome.storage.local.set({'groups': data.groups}, function() {
+					sendRedraw();
+					takeSnapShot(data);
+				});
+			}
+		})
 	});
 }
 
-function storeAllPages(index, activeGroup, tabData, data, newGroup){
+/*
+ * Loops through all tabs, checks to make sure the each tab is not viz-tab, checks to make sure
+ * that each tab is not already saved, creats a new page, and captures the data from it.
+ */
+function storeAllPages(index, activeGroup, tabData, data){
 	if (index === tabData.length){
 		takeSnapShot(data);
 		sendRedraw();
@@ -152,15 +209,12 @@ function storeAllPages(index, activeGroup, tabData, data, newGroup){
 		chrome.tabs.update(tabData[index].id, {active: true}, function() {
 			page = getPage(activeGroup, tabData[index].url);
 
-			if (page !== null || 
-				tabData[index].url.substring(0,9) === 'chrome://' || 
-				tabData[index].url.substring(0,19) === 'chrome-extension://') 
-			{ 
-				storeAllPages(index + 1, activeGroup, tabData, data, newGroup);
+			if (page !== null || tabData[index].url.substring(0,19) === 'chrome-extension://') { 
+				storeAllPages(index + 1, activeGroup, tabData, data);
 			} else {
 				chrome.tabs.captureVisibleTab(chrome.windows.WINDOW_ID_CURRENT, {}, function(img){
 					if (chrome.extension.lastError){
-						storeAllPages(index++, activeGroup, tabData, data, newGroup);
+						storeAllPages(index++, activeGroup, tabData, data);
 						return;
 					}
 					var image = new Image();
@@ -179,7 +233,7 @@ function storeAllPages(index, activeGroup, tabData, data, newGroup){
 						activeGroup.pageList.push(newPage);
 
 						chrome.storage.local.set({'groups': data.groups}, function() {
-							storeAllPages(index + 1, activeGroup, tabData, data, newGroup);
+							storeAllPages(index + 1, activeGroup, tabData, data);
 						});
 					}
 
@@ -189,6 +243,9 @@ function storeAllPages(index, activeGroup, tabData, data, newGroup){
 	}
 }
 
+/*
+ * Gets the page with the argument 'url' from the activeGroup
+ */
 function getPage(activeGroup, url){
 	for (var i = 0; i < activeGroup.pageList.length; i++){
 		if (activeGroup.pageList[i].url === url){
@@ -196,21 +253,6 @@ function getPage(activeGroup, url){
 		}
 	}
 	return null;
-}
-
-function capturePage(activeGroup, page, data, newGroup){
-	chrome.tabs.captureVisibleTab(chrome.windows.WINDOW_ID_CURRENT, {}, function(img){
-		var image = new Image();
-		image.src = img;
-
-		image.onload = function() {
-			page.img = scaleImage(image);
-			chrome.storage.local.set({'groups': data.groups}, function() {
-				sendRedraw();
-				takeSnapShot(data);
-			});
-		}
-	})
 }
 
 /*
@@ -234,7 +276,7 @@ function scaleImage(image){
 }
 
 /*
-* Redraws the tabs page with new content
+* Redraws the viz tab page with new content
 */
 function sendRedraw(){
 	chrome.windows.getAll({populate:true}, function(windows){
@@ -248,15 +290,4 @@ function sendRedraw(){
 	})
 }
 
-/*
-* Stores a snapshot of the current values for undo and redo
-*/
-function takeSnapShot(data){
-	if (undoObj.index < undoObj.undoList.length - 1){
-		undoObj.undoList.splice(undoObj.index + 1);
-	}
-	undoObj.index++;
-	undoObj.undoList.push(data);
-}
 
-main();

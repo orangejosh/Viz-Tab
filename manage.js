@@ -1,5 +1,13 @@
-
-
+/**************************************************************************
+ * manage.js
+ *
+ * A content script that manages the dynamic aspects of the Viz-Tab.
+ * It handles the switching of groups, the renaming of groups, the
+ * reording of groups, the closing of groups. Also handles the renaming
+ * of pages, reording of pages, closing of pages, and opening all
+ * pages of a group.
+ *
+/**************************************************************************/
 
 var dragTarget;
 
@@ -18,7 +26,6 @@ function redrawPage(){
 }
 
 /****************** Manage Groups Start *******************/ 
-
 function setActiveGroup(index, data){
 	for (var i = 0; i < data.groups.length; i++){
 		var aGroup = data.groups[i];
@@ -319,7 +326,6 @@ function openAllPages(){
 }
 
 /****************** Manage Groups End *******************/
-
 
 function rebuildPage(data){
 	clearURL();
