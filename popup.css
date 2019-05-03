@@ -1,6 +1,12 @@
+
 body {
 	width:125px;
-	background: rgba(234,73,161,1);
+	background: rgba(171,171,171,1);
+	border-style: solid;
+	border-color: rgba(234,73,161,1);
+	margin: 0;
+	padding: 10;
+	border-radius: 10px;
 }
 
 body button {
@@ -23,7 +29,7 @@ body button {
 
 #groupList {
 	width:100%;
-	background: rgba(234,73,161,1);
+	background: rgba(171,171,171,1);
 	border-radius: 5px;
 	border-width: 1px;
 	border-color: rgba(0,0,0,1);

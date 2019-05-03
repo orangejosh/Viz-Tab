@@ -169,17 +169,12 @@ function saveTabs(){
 
 	var toggle = document.getElementById('tabSwitch');
 	if (toggle.checked){
-		chrome.runtime.sendMessage({allPages: name}, function(response){
-			window.close();
-		});
+		chrome.runtime.sendMessage({allPages: name});
 	} else {
-		chrome.runtime.sendMessage({onePage: name}, function(response){
-			window.close();
-		});
+		chrome.runtime.sendMessage({onePage: name});
 	}
+	window.close();
 }
-
-
 
 
 

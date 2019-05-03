@@ -163,7 +163,7 @@ function setActiveGroup(group, data){
  */
 function storeOnePage(activeGroup, data) {
 	chrome.tabs.query({active:true, currentWindow: true}, function(tabs){
-		if (tabs[0].url.substring(0,19) == 'chrome-extension://'){
+		if (tabs[0].url.substring(0,9) == 'chrome://' || tabs[0].url.substring(0,19) == 'chrome-extension://'){
 			return;
 		}
 
@@ -209,7 +209,10 @@ function storeAllPages(index, activeGroup, tabData, data){
 		chrome.tabs.update(tabData[index].id, {active: true}, function() {
 			page = getPage(activeGroup, tabData[index].url);
 
-			if (page !== null || tabData[index].url.substring(0,19) === 'chrome-extension://') { 
+			if (page !== null || 
+				tabData[index].url.substring(0,19) === 'chrome-extension://' ||
+				tabData[index].url.substring(0,9) === 'chrome://')
+			{ 
 				storeAllPages(index + 1, activeGroup, tabData, data);
 			} else {
 				chrome.tabs.captureVisibleTab(chrome.windows.WINDOW_ID_CURRENT, {}, function(img){
