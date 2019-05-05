@@ -61,8 +61,15 @@ function main(){
 				saveTabs(request.onePage, data, false);
 			} else if (request.allPages !== undefined){
 				saveTabs(request.allPages, data, true);
+			} else if (request.scroll !== undefined){
+/*
+				// TODO get this to work
+				messageData = request.scroll.split(" ");
+				tabID = parseInt(messageData[0]);
+				pageScroll = messageData[1];
+    			chrome.tabs.sendMessage(tabID, {scroll: "500"});
+*/
 			}
-			sendResponse({complete: 'true'});
 		});
 	});
 }
@@ -174,32 +181,28 @@ function storeOnePage(activeGroup, data) {
 		if (tabs[0].url.substring(0,9) == 'chrome://' || tabs[0].url.substring(0,19) == 'chrome-extension://'){
 			return;
 		}
-
 		page = getPage(activeGroup, tabs[0].url);
-
-		if (page !== null){
-			return;
-		} else {
-			page = {
-				'url': tabs[0].url,
-				'title': tabs[0].title,
-				'scroll': 0,
-				'img': undefined
-			}
-			activeGroup.pageList.push(page);
-		}
+		if (page !== null) return;
 
 		chrome.tabs.captureVisibleTab(chrome.windows.WINDOW_ID_CURRENT, {}, function(img){
-			var image = new Image();
-			image.src = img;
-
-			image.onload = function() {
-				page.img = scaleImage(image);
-				chrome.storage.local.set({'groups': data.groups}, function() {
-					sendRedraw();
-					takeSnapShot(data);
-				});
-			}
+    		chrome.tabs.sendMessage(tabs[0].id, {page: 'getScroll'}, function(response) {  
+				var scroll = response === undefined ? 0 : response.scroll;
+				var image = new Image();
+				image.src = img;
+				image.onload = function() {
+					page = {
+						'url': tabs[0].url,
+						'title': tabs[0].title,
+						'scroll': scroll,
+						'img': scaleImage(image)
+					}
+					activeGroup.pageList.push(page);
+					chrome.storage.local.set({'groups': data.groups}, function() {
+						sendRedraw();
+						takeSnapShot(data);
+					});
+				}
+			});
 		})
 	});
 }
@@ -210,8 +213,10 @@ function storeOnePage(activeGroup, data) {
  */
 function storeAllPages(index, activeGroup, tabData, data){
 	if (index === tabData.length){
-		takeSnapShot(data);
-		sendRedraw();
+		chrome.storage.local.set({'groups': data.groups}, function() {
+			takeSnapShot(data);
+			sendRedraw();
+		});
 		return;
 	} else {
 		chrome.tabs.update(tabData[index].id, {active: true}, function() {
@@ -225,28 +230,28 @@ function storeAllPages(index, activeGroup, tabData, data){
 			} else {
 				chrome.tabs.captureVisibleTab(chrome.windows.WINDOW_ID_CURRENT, {}, function(img){
 					if (chrome.extension.lastError){
-						storeAllPages(index++, activeGroup, tabData, data);
+						storeAllPages(index + 1, activeGroup, tabData, data);
 						return;
 					}
 					var image = new Image();
 					image.src = img;
 
-					image.onload = function() {
-						image = scaleImage(image);
+    				chrome.tabs.sendMessage(tabData[index].id, {page: 'getScroll'}, function(response) {  
+						var scroll = response === undefined ? 0 : response.scroll;
+						image.onload = function() {
+							image = scaleImage(image);
 
-						var newPage = {
-							'url': tabData[index].url,
-							'title': tabData[index].title,
-							'scroll': 0,
-							'img': image
-						}
+							var newPage = {
+								'url': tabData[index].url,
+								'title': tabData[index].title,
+								'scroll': scroll,
+								'img': image
+							}
 
-						activeGroup.pageList.push(newPage);
-
-						chrome.storage.local.set({'groups': data.groups}, function() {
+							activeGroup.pageList.push(newPage);
 							storeAllPages(index + 1, activeGroup, tabData, data);
-						});
-					}
+						}
+					});
 
 				});
 			}

@@ -320,7 +320,10 @@ function openAllPages(){
 
 		for (var i = 0; i < pageList.length; i++){
 			var page = pageList[i];
-			window.open(page.url, '_blank');
+			chrome.tabs.create({url: page.url}, function(tab){
+				// TODO Get this to work
+				//chrome.runtime.sendMessage({scroll: tab.id + " " + page.scroll});
+			});
 		}
 	})
 }
