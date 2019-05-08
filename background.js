@@ -20,6 +20,8 @@
  *				url:
  *				img:
  *
+ *		undoObj
+ *
 /**************************************************************************/
 
 
@@ -29,11 +31,7 @@ var MAX_UNDO = 20;
 main();
 
 function main(){
-	// Initialize undoObj with current groups
-	chrome.storage.local.get('groups', function(data){
-		undoObj.history.push(data);
-	});
-
+	updateOldVersion();
 
 	// Listener to override newTab with Viz-Tab, if enabled
 	chrome.tabs.onCreated.addListener(function(tab) {
@@ -309,4 +307,33 @@ function sendRedraw(){
 	})
 }
 
+function updateOldVersion(){
+	var newData = {
+		groups: undefined,
+		newTab: undefined,
+		toggle: undefined,
+		groupToggle: undefined
+	}
+
+	var lostGroups = [];
+
+	chrome.storage.local.get(null, function(data){
+		console.log(data);
+		for (key in data){
+			if (key === 'groupList'){
+				newData.groups = data[key];
+			} else if (key === 'newTab'){
+				newData.newTab = data[key];
+			} else if (key === 'groupToggle'){
+				newData.groupTobble = data[key];
+			} else if (key !== 'pages' && key !== 'undoObj') {
+				var imgGroup = {};
+				imgGroup[key] = data[key];
+				lostGroups.push(imgGroup);
+			}
+		}
+		console.log(lostGroups);
+		console.log(newData);
+	});
+}
 
