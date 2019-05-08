@@ -185,24 +185,26 @@ function storeOnePage(activeGroup, data) {
 		if (page !== null) return;
 
 		chrome.tabs.captureVisibleTab(chrome.windows.WINDOW_ID_CURRENT, {}, function(img){
+			var image = new Image();
+			image.src = img;
+			image.onload = function() {
+				page = {
+					'url': tabs[0].url,
+					'title': tabs[0].title,
+					'scroll': 0,
+					'img': scaleImage(image)
+				}
+				activeGroup.pageList.push(page);
+				chrome.storage.local.set({'groups': data.groups}, function() {
+					sendRedraw();
+					takeSnapShot(data);
+				});
+			}
+/*
     		chrome.tabs.sendMessage(tabs[0].id, {page: 'getScroll'}, function(response) {  
 				var scroll = response === undefined ? 0 : response.scroll;
-				var image = new Image();
-				image.src = img;
-				image.onload = function() {
-					page = {
-						'url': tabs[0].url,
-						'title': tabs[0].title,
-						'scroll': scroll,
-						'img': scaleImage(image)
-					}
-					activeGroup.pageList.push(page);
-					chrome.storage.local.set({'groups': data.groups}, function() {
-						sendRedraw();
-						takeSnapShot(data);
-					});
-				}
 			});
+*/
 		})
 	});
 }
@@ -236,23 +238,24 @@ function storeAllPages(index, activeGroup, tabData, data){
 					var image = new Image();
 					image.src = img;
 
+					image.onload = function() {
+						image = scaleImage(image);
+
+						var newPage = {
+							'url': tabData[index].url,
+							'title': tabData[index].title,
+							'scroll': scroll,
+							'img': image
+						}
+
+						activeGroup.pageList.push(newPage);
+						storeAllPages(index + 1, activeGroup, tabData, data);
+					}
+/*
     				chrome.tabs.sendMessage(tabData[index].id, {page: 'getScroll'}, function(response) {  
 						var scroll = response === undefined ? 0 : response.scroll;
-						image.onload = function() {
-							image = scaleImage(image);
-
-							var newPage = {
-								'url': tabData[index].url,
-								'title': tabData[index].title,
-								'scroll': scroll,
-								'img': image
-							}
-
-							activeGroup.pageList.push(newPage);
-							storeAllPages(index + 1, activeGroup, tabData, data);
-						}
 					});
-
+*/
 				});
 			}
 		});
