@@ -10,7 +10,7 @@
  *		groupToggle: (collapse multiple rows of groups)
  *		newTab: (override the new tab with Viz-Tab)
  *
- * 		group objects (an array of groups)
+ * 		groups (an array of groups)
  * 			active: (is this the active group)
  * 			id: (id of group)
  * 			name: (name of group)
@@ -19,8 +19,6 @@
  *				title:
  *				url:
  *				img:
- *
- *		undoObj
  *
 /**************************************************************************/
 
@@ -31,6 +29,7 @@ var MAX_UNDO = 20;
 main();
 
 function main(){
+	// Checks for an old version and updates the 
 	updateOldVersion();
 
 	// Listener to override newTab with Viz-Tab, if enabled
@@ -307,33 +306,65 @@ function sendRedraw(){
 	})
 }
 
+/*
+ * Along with moveImage(), updateOldVersion() converts the data
+ * structure from the old version to the new.
+ */
 function updateOldVersion(){
-	var newData = {
-		groups: undefined,
-		newTab: undefined,
-		toggle: undefined,
-		groupToggle: undefined
-	}
-
 	var lostGroups = [];
-
 	chrome.storage.local.get(null, function(data){
-		console.log(data);
+		if (data.groupList === undefined){
+			return;
+		}
+
+		var newData = {
+			groups: undefined,
+			newTab: undefined,
+			toggle: undefined,
+			groupToggle: undefined
+		}
+
 		for (key in data){
 			if (key === 'groupList'){
 				newData.groups = data[key];
 			} else if (key === 'newTab'){
 				newData.newTab = data[key];
+			} else if (key === 'toggle'){
+				newData.toggle = data[key];
 			} else if (key === 'groupToggle'){
-				newData.groupTobble = data[key];
+				newData.groupToggle = data[key];
 			} else if (key !== 'pages' && key !== 'undoObj') {
 				var imgGroup = {};
 				imgGroup[key] = data[key];
 				lostGroups.push(imgGroup);
 			}
 		}
-		console.log(lostGroups);
-		console.log(newData);
+		for (key in lostGroups){
+			var groupObj = lostGroups[key];
+			var groupID = Object.keys(groupObj)[0];
+			var group = groupObj[groupID];
+			for (page in group){
+				var url = group[page].url;
+				var img = group[page].img;
+				moveImage(newData, groupID, url, img);
+			}
+		}
+
+		chrome.storage.local.clear(function(){
+			chrome.storage.local.set(newData);
+		});
 	});
 }
 
+function moveImage(newData, groupID, url, img){
+	for (group in newData.groups){
+		if (groupID === newData.groups[group].id){
+			for (page in newData.groups[group].pageList){
+				if (url === newData.groups[group].pageList[page].url){
+					newData.groups[group].pageList[page].img = img;
+					return;
+				}
+			}
+		}
+	}
+}
