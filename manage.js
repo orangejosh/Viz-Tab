@@ -20,36 +20,24 @@ chrome.runtime.onMessage.addListener(
 )
 
 function redrawPage(){
-	chrome.storage.local.get('groups', function(data){
+	chrome.storage.local.get(null, function(data){
 		rebuildPage(data);
 	});
 }
 
 /****************** Manage Groups Start *******************/ 
-function setActiveGroup(index, data){
-	for (var i = 0; i < data.groups.length; i++){
-		var aGroup = data.groups[i];
-		if (i === index){
-			aGroup.active = true;
-		} else {
-			aGroup.active = false;
-		}
-	}
-}
 
 function switchGroup(id){
 	var activeGroup;
-	chrome.storage.local.get('groups', function(data){
+	chrome.storage.local.get(null, function(data){
 		for (var i = 0; i < data.groups.length; i++){
 			var aGroup = data.groups[i];
 			if (aGroup.id === id){
-				if (aGroup.active === true){
+				if (data.activeIndex === i){
 					return;
 				}
-				aGroup.active = true;
+				data.activeIndex = i;
 				activeGroup = aGroup;
-			} else {
-				aGroup.active = false;
 			}
 		}
 
@@ -95,7 +83,7 @@ function renameGroup(groupName){
 }
 
 function saveGroupName(name){
-	chrome.storage.local.get('groups', function(data){
+	chrome.storage.local.get(null, function(data){
 		var newName = checkSameName(name, data.groups);
 		for (var i = 0; i < data.groups.length; i++){
 			if (data.groups[i].active){
@@ -152,7 +140,7 @@ function allignGroups(){
 }
 
 function saveNewGroupOrder(){
-	chrome.storage.local.get('groups', function(data){
+	chrome.storage.local.get(null, function(data){
 		var newGroupOrder= [];
 
 		var tabList = document.getElementsByClassName('tabButton');
@@ -182,8 +170,13 @@ function closeGroup(groupName){
 			var group = data.groups[i];
 			if (group.name === groupName){
 				data.groups.splice(i, 1);
-				if (group.active === true){
-					setActiveIndex(i, data);
+				if (data.activeIndex === i){
+					if (data.activeIndex === data.groups.length){
+						data.activeIndex = i - 1;					
+					}
+					if (data.activeIndex < 0){
+						data.activeIndex = undefined;
+					}
 				}
 
 				chrome.storage.local.set(data, function(){
@@ -197,8 +190,8 @@ function closeGroup(groupName){
 }
 
 function reGroupPage(page, target) {
-	chrome.storage.local.get('groups', function(data){
-		var activeGroup = getActiveGroup(data);
+	chrome.storage.local.get(null, function(data){
+		var activeGroup = data.groups[data.activeIndex];
 
 		var targetGroup;
 		for (var i = 0; i < data.groups.length; i++){
@@ -236,9 +229,9 @@ function reGroupPage(page, target) {
 /****************** Manage Pages Start *******************/ 
 
 function savePageName(newName, url){
-	chrome.storage.local.get('groups', function(data){
+	chrome.storage.local.get(null, function(data){
 		var grpList = data.groups;
-		var activeGroup = getActiveGroup(data);
+		var activeGroup = data.groups[data.activeIndex];
 
 		for (var i = 0; i < activeGroup.pageList.length; i++){
 			var page = activeGroup.pageList[i];
@@ -265,8 +258,8 @@ function reOrderPages(event){
 }
 
 function saveNewPageOrder(){
-	chrome.storage.local.get('groups', function(data){
-		var activeGroup = getActiveGroup(data);
+	chrome.storage.local.get(null, function(data){
+		var activeGroup = data.groups[data.activeIndex];
 		var pageList = activeGroup.pageList;
 		var newPageList = [];
 
@@ -292,7 +285,7 @@ function saveNewPageOrder(){
 }
 
 function closePage(id){
-	chrome.storage.local.get('groups', function(data){
+	chrome.storage.local.get(null, function(data){
 		var columnList = document.getElementsByClassName('pageBlock');
 
 		for (var i = 0; i < columnList.length; i++){
@@ -300,7 +293,7 @@ function closePage(id){
 			var button = pageBlock.getElementsByClassName('closeButton');
 
 			if (button[0].id === id){
-				var activeGroup = getActiveGroup(data);
+				var activeGroup = data.groups[data.activeIndex];
 
 				activeGroup.pageList.splice(i, 1);
 				chrome.storage.local.set(data, function(){
@@ -314,8 +307,8 @@ function closePage(id){
 }
 
 function openAllPages(){
-	chrome.storage.local.get('groups', function(data){
-		var activeGroup = getActiveGroup(data);
+	chrome.storage.local.get(null, function(data){
+		var activeGroup = data.groups[data.activeIndex];
 		var pageList = activeGroup.pageList;
 
 		for (var i = 0; i < pageList.length; i++){
@@ -400,16 +393,6 @@ function getTargetIndex(target, elem){
 			return i;
 		}
 	}
-}
-
-function setActiveIndex(index, data){
-	if (data.groups.length === 0){
-		return;
-	} else if (index === data.groups.length){
-		setActiveGroup(index-1, data)
-	} else {
-		setActiveGroup(index, data);
-	} 
 }
 
 function startDragBlock(target){

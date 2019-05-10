@@ -14,7 +14,7 @@ document.onload = init();
 
 function init() {
 	// Builds the page
-	chrome.storage.local.get('groups', function (data){
+	chrome.storage.local.get(null, function (data){
 		if (data.groups === undefined){
 			data.groups = [];
 		}
@@ -92,8 +92,8 @@ function buildGroups(data){
 		var group = data.groups[i];
 		var tab = createTab(group);
 
-		var tabImage = createTabImage(group);
-		var title = createTabTitle(group);
+		var tabImage = createTabImage(group, data.activeIndex === i);
+		var title = createTabTitle(group, data.activeIndex === i);
 		var input = createTabInput(group);
 		var closeButton = createTabClose(group);
 
@@ -154,6 +154,8 @@ function createTab(group){
 	})
 
 	tab.addEventListener('drop', function(event){
+		console.log(dragTarget);
+		console.log(event.target);
 		if (dragTarget.className === 'pageBlock' && event.target.className === 'tabButton'){
 			var tabImg = event.target.getElementsByClassName('tabImage')[0];
 			tabImg.src = 'images/tabOn.png';
@@ -169,11 +171,11 @@ function createTab(group){
 /*
  * Creates the image for the groups tab
  */
-function createTabImage(group){
+function createTabImage(group, active){
 	var tabImage = document.createElement('img');
 	tabImage.className = 'tabImage dragBlock';
 	tabImage.draggable = false;
-	tabImage.src = group.active === true ? 'images/tabOn.png' : 'images/tabOff.png';
+	tabImage.src = active ? 'images/tabOn.png' : 'images/tabOff.png';
 	tabImage.addEventListener('click', function(){
 		switchGroup(group.id);
 	});
@@ -187,11 +189,11 @@ function createTabImage(group){
 /*
  * Creates the title for the groups tab
  */
-function createTabTitle(group){
+function createTabTitle(group, active){
 	var title = document.createElement('p');
 	title.className = 'tabTitle';
 	title.draggable = false;
-	title.style.color = group.active === true ? 'black' : 'grey';	
+	title.style.color = active ? 'black' : 'grey';	
 	var node = document.createTextNode(group.name);
 	title.appendChild(node);
 
@@ -289,7 +291,7 @@ function createTabExpandButton(){
  * Builds the page data of the active group
  */
 function buildPages(data){
-	var activeGroup = getActiveGroup(data);
+	var activeGroup = data.groups[data.activeIndex];
 	if (activeGroup === undefined){
 		return;
 	}
@@ -500,7 +502,7 @@ function createOpenAllButton(expand){
 /**************Build Pages End ******************/
 
 
-
+/*
 function getActiveGroup(data){
 	for (var i = 0; i < data.groups.length; i++){
 		var aGroup = data.groups[i];
@@ -511,6 +513,7 @@ function getActiveGroup(data){
 	setActiveGroup(data.groups.length - 1, data);
 	return data.groups[data.groups.length - 1];
 }
+*/
 
 /*
  * If there are many rows of groups they can be collapsed so as to take less space.

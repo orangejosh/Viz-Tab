@@ -36,7 +36,7 @@ function addListeners(){
 }
 
 function createGroupList(){
-	chrome.storage.local.get('groups', function(data){
+	chrome.storage.local.get(null, function(data){
 		var d = new Date();
 		var date = d.toLocaleDateString();
 
@@ -57,15 +57,8 @@ function createGroupList(){
 			return;
 		}			
 
-		var activeGroup;
-
 		for (var i = 0; i < data.groups.length; i++){
 			var aGroup = data.groups[i];
-
-			if (aGroup.active == true){
-				activeGroup = aGroup;
-			}			
-
 			var option = document.createElement('option');
 			option.value = aGroup.name;
 			option.text = aGroup.name;
@@ -73,14 +66,8 @@ function createGroupList(){
 			grpButton.appendChild(option);
 		}
 
-		if (activeGroup !== undefined){
-			for (var j = 0; j < grpButton.length; j++){
-				var aName = grpButton.options[j].value;
-				if (aName === activeGroup.name){
-					grpButton.selectedIndex = j;
-					break;
-				}
-			}
+		if (data.activeIndex !== undefined){
+			grpButton.selectedIndex = data.activeIndex;
 		}
 	})
 }

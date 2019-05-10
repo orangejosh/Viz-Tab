@@ -47,7 +47,7 @@ function main(){
 	// Listener that recieves messages to execute undo, redo, 
 	// save state, save one tab, or save all tabs.
 	chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
-		chrome.storage.local.get('groups', function (data) {
+		chrome.storage.local.get(null, function (data) {
 			if (request.undo !== undefined){
 				undo();
 			} else if (request.redo !== undefined){
@@ -78,7 +78,7 @@ function undo(){
 	}
 
 	data = undoObj.history[undoObj.index];
-	chrome.storage.local.set({'groups': data.groups}, function() {
+	chrome.storage.local.set(data, function() {
 		sendRedraw();
 	});
 }
@@ -89,7 +89,7 @@ function redo(){
 		undoObj.index = undoObj.history.length - 1;
 	}
 	data = undoObj.history[undoObj.index];
-	chrome.storage.local.set({'groups': data.groups}, function() {
+	chrome.storage.local.set(data, function() {
 		sendRedraw();
 	});
 }
@@ -113,12 +113,13 @@ function takeSnapShot(data){
  * Save either one tab or all the tabs into the group 'name'
  */
 function saveTabs(name, data, allTabs){
-	var group = getExistingGroup(name, data);
+	var activeIndex = getExistingGroup(name, data);
+	if (activeIndex === null){
+		activeIndex = getNewGroup(name, data);
+	} 
 
-	if (group === null){
-		group = getNewGroup(name, data);
-	}
-	setActiveGroup(group, data);
+	data.activeIndex = activeIndex;
+	var group = data.groups[activeIndex];
 
 	if (allTabs){
 		chrome.tabs.query({currentWindow: true}, function(tabData){
@@ -141,7 +142,7 @@ function getExistingGroup(name, data){
 	for (var i = 0; i < data.groups.length; i++){
 		var aGroup = data.groups[i];
 		if (name === aGroup.name){
-			return aGroup;
+			return i;
 		}
 	}
 	return null;
@@ -151,23 +152,12 @@ function getNewGroup(name, data){
 	aGroup = {
 		'id': (new Date()).getTime().toString(),
 		'name': name,
-		'active': true,
 		'pageList': []
 	}
 	data.groups.push(aGroup);
-	return aGroup;
+	return data.groups.length - 1;
 }
 	
-function setActiveGroup(group, data){
-	for (var i = 0; i < data.groups.length; i++){
-		var aGroup = data.groups[i];
-		if (aGroup === group){
-			aGroup.active = true;
-		} else {
-			aGroup.active = false;
-		}
-	}
-}
 
 /*
  * Gets the active tab, checks to make sure the active tab is not viz-tab, checks to make sure
@@ -192,7 +182,7 @@ function storeOnePage(activeGroup, data) {
 					'img': scaleImage(image)
 				}
 				activeGroup.pageList.push(page);
-				chrome.storage.local.set({'groups': data.groups}, function() {
+				chrome.storage.local.set(data, function() {
 					sendRedraw();
 					takeSnapShot(data);
 				});
@@ -212,7 +202,7 @@ function storeOnePage(activeGroup, data) {
  */
 function storeAllPages(index, activeGroup, tabData, data){
 	if (index === tabData.length){
-		chrome.storage.local.set({'groups': data.groups}, function() {
+		chrome.storage.local.set(data, function() {
 			takeSnapShot(data);
 			sendRedraw();
 		});
