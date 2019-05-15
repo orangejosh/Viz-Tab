@@ -36,7 +36,6 @@ function addListeners(){
 }
 
 function createGroupList(){
-	// TODO Not setting the active group correctly in menu
 	chrome.storage.local.get(null, function(data){
 		var d = new Date();
 		var date = d.toLocaleDateString();
@@ -68,7 +67,7 @@ function createGroupList(){
 		}
 
 		if (data.activeIndex !== undefined){
-			grpButton.selectedIndex = data.activeIndex;
+			grpButton.selectedIndex = data.activeIndex + 1;
 		}
 	})
 }
