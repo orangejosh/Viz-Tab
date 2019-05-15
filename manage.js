@@ -14,15 +14,17 @@ var dragTarget;
 chrome.runtime.onMessage.addListener(
 	function(request, sender, sendResponse){
 		if (request.page === 'redraw'){
-			redrawPage();
+			chrome.storage.local.get(null, function(data){
+				redrawPage(data);
+			});
 		}
 	}
 )
 
-function redrawPage(){
-	chrome.storage.local.get(null, function(data){
-		rebuildPage(data);
-	});
+function redrawPage(data){
+	clearURL();
+	buildGroups(data);
+	buildPages(data);
 }
 
 /****************** Manage Groups Start *******************/ 
@@ -62,7 +64,7 @@ function switchGroup(id){
 			buildPages(data);
 			toggleGroupRows();
 			chrome.runtime.sendMessage({save: 'save'});
-			redrawPage();
+			redrawPage(data);
 		})
 	})
 }
@@ -85,17 +87,11 @@ function renameGroup(groupName){
 function saveGroupName(name){
 	chrome.storage.local.get(null, function(data){
 		var newName = checkSameName(name, data.groups);
-		for (var i = 0; i < data.groups.length; i++){
-			if (data.groups[i].active){
-				data.groups[i].name = name;
-				chrome.storage.local.set(data, function() {
-					rebuildPage(data);
-					chrome.runtime.sendMessage({save: 'save'});
-					redrawPage();
-				});
-				return;
-			}
-		}
+		data.groups[data.activeIndex].name = newName;
+		chrome.storage.local.set(data, function(){
+			chrome.runtime.sendMessage({save: 'save'});
+			redrawPage(data);
+		});
 	});
 }
 
@@ -162,7 +158,7 @@ function saveNewGroupOrder(activeTabId){
 		data.groups = newGroupOrder;
 		chrome.storage.local.set(data, function(){
 			chrome.runtime.sendMessage({save: 'save'});
-			redrawPage();
+			redrawPage(data);
 		});
 	});
 }
@@ -185,7 +181,7 @@ function closeGroup(groupName){
 
 				chrome.storage.local.set(data, function(){
 					chrome.runtime.sendMessage({save: 'save'});
-					redrawPage();
+					redrawPage(data);
 				});
 				break;
 			}
@@ -207,7 +203,7 @@ function addNewGroup() {
 		data.activeIndex = data.groups.length - 1;
 		chrome.storage.local.set(data, function(){
 			chrome.runtime.sendMessage({save: 'save'});
-			redrawPage();
+			redrawPage(data);
 		});
 	});
 }
@@ -240,7 +236,7 @@ function reGroupPage(page, target) {
 
 		chrome.storage.local.set(data, function(){
 			chrome.runtime.sendMessage({save: 'save'});
-			redrawPage();
+			redrawPage(data);
 		});
 	});
 }
@@ -261,9 +257,8 @@ function savePageName(newName, url){
 			if (page.url === url){
 				page.title = newName;
 				chrome.storage.local.set(data, function(){
-					rebuildPage(data);
 					chrome.runtime.sendMessage({save: 'save'});
-					redrawPage();
+					redrawPage(data);
 				});
 			}
 		}
@@ -302,7 +297,7 @@ function saveNewPageOrder(){
 		activeGroup.pageList = newPageList;
 		chrome.storage.local.set(data, function(){
 			chrome.runtime.sendMessage({save: 'save'});
-			redrawPage();
+			redrawPage(data);
 		});
 	})
 }
@@ -321,7 +316,7 @@ function closePage(id){
 				activeGroup.pageList.splice(i, 1);
 				chrome.storage.local.set(data, function(){
 					chrome.runtime.sendMessage({save: 'save'});
-					redrawPage();
+					redrawPage(data);
 				});
 				return;
 			}
@@ -345,12 +340,6 @@ function openAllPages(){
 }
 
 /****************** Manage Groups End *******************/
-
-function rebuildPage(data){
-	clearURL();
-	buildGroups(data);
-	buildPages(data);
-}
 
 function clearURL(){
 	var help = document.getElementsByClassName('help');

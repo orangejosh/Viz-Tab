@@ -552,7 +552,9 @@ function toggleGroupRows() {
 		toggle.style.background = 'url("images/downArrow.jpg") no-repeat';
 		pageBox.style.top = (rows - 1) * -7 + 'px';
 		toggle.style.top = (rows - 1) * 7 + 'px';
-		openButton.style.top = (rows - 1) * 7 - 23 + 'px';
+		if (openButton !== null){
+			openButton.style.top = (rows - 1) * 7 - 23 + 'px';
+		}
 
 		for (var i = 0; i < tabs.length; i++){
 			if (i % rowLength === 0){
@@ -565,7 +567,9 @@ function toggleGroupRows() {
 		toggle.style.background = 'url("images/upArrow.jpg") no-repeat';
 		pageBox.style.top = (rows - 1) * -23 + 'px';
 		toggle.style.top = (rows - 1) * 23 + 'px';
-		openButton.style.top = (rows - 1) * 23 - 23 + 'px';
+		if (openButton !== null){
+			openButton.style.top = (rows - 1) * 23 - 23 + 'px';
+		}
 
 		for (var i = 0; i < tabs.length; i++){
 			if (i % rowLength === 0){
