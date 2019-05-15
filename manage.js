@@ -139,7 +139,7 @@ function allignGroups(){
 	})
 }
 
-function saveNewGroupOrder(){
+function saveNewGroupOrder(activeTabId){
 	chrome.storage.local.get(null, function(data){
 		var newGroupOrder= [];
 
@@ -152,6 +152,9 @@ function saveNewGroupOrder(){
 				var group = data.groups[k];
 				if (group.name === title){
 					newGroupOrder.push(group);
+					if (group.id === activeTabId){
+						data.activeIndex = i;
+					}
 					break;
 				}
 			}

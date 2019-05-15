@@ -154,14 +154,12 @@ function createTab(group){
 	})
 
 	tab.addEventListener('drop', function(event){
-		console.log(dragTarget);
-		console.log(event.target);
 		if (dragTarget.className === 'pageBlock' && event.target.className === 'tabButton'){
 			var tabImg = event.target.getElementsByClassName('tabImage')[0];
 			tabImg.src = 'images/tabOn.png';
 			reGroupPage(dragTarget, event.target);
 		} else if (dragTarget.className === 'tabButton' && event.target.className === 'tabButton'){
-	 		saveNewGroupOrder();
+	 		saveNewGroupOrder(dragTarget.id);
 		}
 	})
 
