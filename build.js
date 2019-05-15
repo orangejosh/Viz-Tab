@@ -110,11 +110,26 @@ function buildGroups(data){
 		tab.style.top = rows * 7 - 2 + 'px';
 		tab.style.zIndex = rows;
 	}
+	if (data.groups.length > 0){
+		var addButton = createAddTabButton();
+		groupBox.appendChild(addButton);
+	}
 
 	var clear = document.createElement('div');
 	clear.className = 'clear';
 	groupBox.appendChild(clear);
 
+}
+
+function createAddTabButton(){
+	var addButton= document.createElement('img');
+	addButton.id = 'addButton';
+	addButton.draggable = false;
+	addButton.src = 'images/addButton.png';
+	addButton.addEventListener('click', function(){
+		addNewGroup();
+	});
+	return addButton;
 }
 
 /*

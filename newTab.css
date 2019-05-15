@@ -106,6 +106,14 @@ body {
 	pointer-events: all;
 }
 
+#addButton {
+	float: right;
+	margin: 7px;
+	width: 10px;
+	cursor: pointer;
+	pointer-events: all;
+}
+
 label {
 	cursor: pointer;
 }

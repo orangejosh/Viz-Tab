@@ -168,7 +168,8 @@ function saveNewGroupOrder(activeTabId){
 }
 
 function closeGroup(groupName){
-	chrome.storage.local.get('groups', function(data){
+	// TODO This is still not setting the active tab correctly
+	chrome.storage.local.get(null, function(data){
 		for (var i = 0; i < data.groups.length; i++){
 			var group = data.groups[i];
 			if (group.name === groupName){
@@ -190,6 +191,25 @@ function closeGroup(groupName){
 			}
 		}
 	})
+}
+
+function addNewGroup() {
+	chrome.storage.local.get(null, function(data){
+		var d = new Date();
+		var date = d.toLocaleDateString();
+		var name = checkSameName(date, data.groups);
+		var aGroup = {
+			'id': (new Date()).getTime().toString(),
+			'name': name,
+			'pageList': []
+		}
+		data.groups.push(aGroup);
+		data.activeIndex = data.groups.length - 1;
+		chrome.storage.local.set(data, function(){
+			chrome.runtime.sendMessage({save: 'save'});
+			redrawPage();
+		});
+	});
 }
 
 function reGroupPage(page, target) {
