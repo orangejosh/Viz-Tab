@@ -164,19 +164,18 @@ function saveNewGroupOrder(activeTabId){
 }
 
 function closeGroup(groupName){
-	// TODO This is still not setting the active tab correctly
 	chrome.storage.local.get(null, function(data){
 		for (var i = 0; i < data.groups.length; i++){
 			var group = data.groups[i];
 			if (group.name === groupName){
 				data.groups.splice(i, 1);
-				if (data.activeIndex === i){
-					if (data.activeIndex === data.groups.length){
-						data.activeIndex = i - 1;					
-					}
-					if (data.activeIndex < 0){
-						data.activeIndex = undefined;
-					}
+				if (data.activeIndex >= i){
+					data.activeIndex--; 
+				}
+				if (data.activeIndex < 0 && data.groups.length > 0){
+					data.activeIndex = 0;
+				} else if (data.activeIndex < 0){
+					data.activeIndex = undefined;
 				}
 
 				chrome.storage.local.set(data, function(){
