@@ -330,7 +330,7 @@ function openAllPages(){
 
 		for (var i = 0; i < pageList.length; i++){
 			var page = pageList[i];
-			chrome.tabs.create({url: page.url}, function(tab){
+			chrome.tabs.create({url: page.url, active: false}, function(tab){
 				// TODO Get this to work
 				//chrome.runtime.sendMessage({scroll: tab.id + " " + page.scroll});
 			});

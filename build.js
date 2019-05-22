@@ -423,7 +423,7 @@ function createPreview(page, block, img){
 	link.appendChild(image);
 	link.draggable = false;
 	link.addEventListener('click', function(){
-		chrome.tabs.create({url: page.url}, function(tab){
+		chrome.tabs.create({url: page.url, active: false}, function(tab){
 			// TODO Get this to work.
 			//chrome.runtime.sendMessage({scroll: tab.id + " " + page.scroll});
 		});

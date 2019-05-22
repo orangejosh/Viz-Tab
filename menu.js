@@ -20,21 +20,24 @@ function help() {
 			{'scroll': 0, 'title': 'Google', 'url': 'https://www.google.com', 'img': '/images/google.jpg'},
 			{'scroll': 0, 'title': 'Bing', 'url': 'https://www.bing.com', 'img': '/images/bing.jpg'}
 		]
-	var group1 = createDummyGroup(true, 'SearchEngines', pageList);
-	var group2 = createDummyGroup(false, 'Shopping', []);
-	var group3 = createDummyGroup(false, 'Work', []);
-	var group4 = createDummyGroup(false, 'Fun', []);
+	var group1 = createDummyGroup('SearchEngines', pageList);
+	var group2 = createDummyGroup('Shopping', []);
+	var group3 = createDummyGroup('Work', []);
+	var group4 = createDummyGroup('Fun', []);
 
-	var groupList = {
+	var groups = {
+		'activeIndex': 0,
+		'groupToggle': true,
+		'newTab': true,
+		'toggle': false,
 		'groups':[group1, group2, group3, group4]
 	}
 
-	createHelpPage(groupList);
+	createHelpPage(groups);
 }
 
-function createDummyGroup(active, name, pageList){
+function createDummyGroup(name, pageList){
 	var group = {
-		'active': active,
 		'id': '',
 		'name': name,
 		'pageList': pageList
@@ -45,13 +48,13 @@ function createDummyGroup(active, name, pageList){
 function createHelpPage(groupList){
 	var pageScreen = document.createElement('div');
 	pageScreen.id = 'screen';
-	rebuildPage(groupList);
+	redrawPage(groupList);
 	document.body.insertBefore(pageScreen, document.body.firstChild);
 
 	pageScreen.addEventListener('click', function(){
 		document.body.removeChild(pageScreen);
-		chrome.storage.local.get('groups', function(data){
-			rebuildPage(data);
+		chrome.storage.local.get(null, function(data){
+			redrawPage(data);
 		})
 	})
 
