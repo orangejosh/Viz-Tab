@@ -158,7 +158,6 @@ function saveNewGroupOrder(activeTabId){
 		data.groups = newGroupOrder;
 		chrome.storage.local.set(data, function(){
 			chrome.runtime.sendMessage({save: 'save'});
-			redrawPage(data);
 		});
 	});
 }
@@ -296,7 +295,6 @@ function saveNewPageOrder(){
 		activeGroup.pageList = newPageList;
 		chrome.storage.local.set(data, function(){
 			chrome.runtime.sendMessage({save: 'save'});
-			redrawPage(data);
 		});
 	})
 }
