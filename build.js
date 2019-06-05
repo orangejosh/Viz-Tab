@@ -53,6 +53,9 @@ function buildMenu(){
 	var redoButton = document.getElementById('redo');
 	redoButton.addEventListener('click', redo);
 
+	var settingButton = document.getElementById('settings');
+	settingButton.addEventListener('click', settings);
+
 	var helpButton = document.getElementById('help');
 	helpButton.addEventListener('click', help);
 
@@ -423,10 +426,17 @@ function createPreview(page, block, img){
 	link.appendChild(image);
 	link.draggable = false;
 	link.addEventListener('click', function(){
-		chrome.tabs.create({url: page.url, active: false}, function(tab){
-			// TODO Get this to work.
-			//chrome.runtime.sendMessage({scroll: tab.id + " " + page.scroll});
-		});
+		chrome.storage.local.get(null, function(data){
+			if (data.openTab){
+				chrome.tabs.create({url: page.url, active: false}, function(tab){
+					// TODO Get this to work.
+					//chrome.runtime.sendMessage({scroll: tab.id + " " + page.scroll});
+				});
+			} else {
+				window.open(page.url, "_self");
+			}
+		})
+
 	});
 
 	return link;

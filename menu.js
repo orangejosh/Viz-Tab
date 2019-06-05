@@ -15,6 +15,10 @@ function redo() {
 	chrome.runtime.sendMessage({redo: 'redo'});
 }
 
+function settings() {
+	window.open("/settings.html", "_self");	
+}
+
 function help() {
 	var pageList = [
 			{'scroll': 0, 'title': 'Google', 'url': 'https://www.google.com', 'img': '/images/google.jpg'},
