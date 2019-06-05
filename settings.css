@@ -1,3 +1,6 @@
+body {
+ background-size: cover;
+}
 
 body h1 {
 	margin-top: 50; 
