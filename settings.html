@@ -5,15 +5,19 @@
 </head>
 
 <body>
-	<h1>Settings</h1>
-	<div class='container'>
+	<div id='container'>
+		<h1>Settings</h1>
 		<form action="/action_page.php">
 			<input type="checkbox" name="newTab" value="newTab" id="newTab"> New Tab<br>
 			<p>Every page opened from Viz Tab will be opened in a new tab.</p>
 			<input type="checkbox" name="overrideTab" value="overrideTab" id="overrideTab"> Override New Tab<br>
 			<p>Opening a new tab will open Viz Tab instead of your homepage.</p>
 		</form>
-		<input id='file-input' type='file' name='picker' />
+		<h3>Background Image</h3>
+		<input id='file-input' type='file' name='picker' /><br>
+		<button id='clear'>Clear Image</button><br>
+		<h3>Block Color</h3>
+		<input id='color-picker' type='color' name='color-picker'/><br>
 	</div>
 	
 
