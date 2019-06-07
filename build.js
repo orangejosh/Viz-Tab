@@ -328,7 +328,32 @@ function buildPages(data){
 		}
 	}
 
+	if (data.blockColor != undefined){
+		pageBox.style.backgroundColor = data.blockColor;
+	}
+	if (data.backColor != undefined){
+		document.body.style.backgroundColor = data.backColor;
+	}
+	if (data.backgroundImg != undefined){
+		document.body.style.backgroundImage = 'url(' + data.backgroundImg + ')';
+	}
+
 	createPages(activeGroup, data);
+
+	if (data.textColor != undefined){
+		document.getElementById('menuButton').style.color = data.textColor;
+		document.getElementById('undo').style.color = data.textColor;
+		document.getElementById('redo').style.color = data.textColor;
+		document.getElementById('settings').style.color = data.textColor;
+		document.getElementById('help').style.color = data.textColor;
+		document.getElementById('donateButton').style.color = data.textColor;
+		
+		var pages = document.getElementsByClassName("pageLink");
+		for (var i = 0; i < pages.length; i++){
+			pages[i].style.color = data.textColor;
+		}
+	}
+
 }
 
 /*
