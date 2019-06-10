@@ -6,7 +6,6 @@ var textColor = '#ffffff';
 
 document.onload = init();
 
-
 function init(){
 	chrome.storage.local.get(null, function(data){
 		var newTabButton = document.getElementById("newTab");
@@ -35,19 +34,13 @@ function init(){
 		textButton.addEventListener('input', function(e){getColor(e, 'text');}, false);
 		textButton.addEventListener('focus', function(){setColor('text');}, false);
 
-		if (data.openTab === undefined){
-			data.openTab = false;
-		}
-		if (data.newTab === undefined) {
-			data.newTab = false;
-		}
 		if (data.openTab){
 			newTabButton.checked = true;
 		}
 		if (data.newTab){
 			overrideButton.checked = true;
 		}
-		if (data.backgroundImg !== undefined) {
+		if (data.backgroundImg !== undefined && data.backgroundImg !== null) {
 			document.body.style.backgroundImage = 'url(' + data.backgroundImg + ')';
 		}
 		if (data.backColor !== undefined) {

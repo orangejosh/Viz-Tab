@@ -16,7 +16,7 @@ function redo() {
 }
 
 function settings() {
-	window.open("/settings.html", "_self");	
+	window.open("settings.html", "_self");	
 }
 
 function help() {
