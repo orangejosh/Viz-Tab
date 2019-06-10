@@ -602,6 +602,10 @@ function toggleGroupRows() {
 			if (i % rowLength === 0){
 				rows--;
 			}
+
+			for (var j = 0; j < tabs[i].children.length; j++){
+				tabs[i].children[j].hidden = false;
+			}
 			tabs[i].style.top = rows * 7 - 2 + 'px';
 		}
 		chrome.storage.local.set({'groupToggle': true});
@@ -613,11 +617,21 @@ function toggleGroupRows() {
 			openButton.style.top = (rows - 1) * 23 - 23 + 'px';
 		}
 
+		var firstRow = rows - 1;
 		for (var i = 0; i < tabs.length; i++){
 			if (i % rowLength === 0){
 				rows--;
 			}
 			tabs[i].style.top = rows * 23 - 2 + 'px';
+
+			if (rows !== firstRow){
+				var children = tabs[i].children;
+				for (var j = 0; j < children.length; j++){
+					if (!children[j].classList.contains('tabImage')){
+						children[j].hidden = true;
+					}
+				}
+			}
 		}
 		chrome.storage.local.set({'groupToggle': false});
 	}
