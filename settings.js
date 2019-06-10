@@ -1,9 +1,11 @@
 
-var backColor;
-var blockColor;
-var textColor;
+
+var blockColor = createColor('#ffffff');
+var backColor = '#ffffff';
+var textColor = '#ffffff';
 
 document.onload = init();
+
 
 function init(){
 	chrome.storage.local.get(null, function(data){
@@ -13,6 +15,7 @@ function init(){
 		var clearButton = document.getElementById("clear");
 		var backButton = document.getElementById("backColor");
 		var blockButton = document.getElementById("blockColor");
+		var slider = document.getElementById("slider");
 		var textButton = document.getElementById("textColor");
 
 		newTabButton.addEventListener('change', saveNewTabSetting, false);
@@ -20,14 +23,17 @@ function init(){
 		pickButton.addEventListener('input', loadImage, false);
 		clearButton.addEventListener('click', clearBackground, false);
 
-		backButton.addEventListener('input', function(e){backColor = e.target.value;}, false);
-		backButton.addEventListener('focus', function(){setColor(backColor);}, false);
+		slider.addEventListener('input', dimBlock, false);
+		slider.addEventListener('mouseup', function(){chrome.storage.local.set({'blockColor': blockColor})}, false);
 
-		blockButton.addEventListener('input', function(e){blockColor = e.target.value;}, false);
-		blockButton.addEventListener('focus', function(){setColor(blockColor);}, false);
+		backButton.addEventListener('input', function(e){getColor(e, 'back')}, false);
+		backButton.addEventListener('focus', function(){setColor('back');}, false);
 
-		textButton.addEventListener('input', function(e){textColor = e.target.value;}, false);
-		textButton.addEventListener('focus', function(){setColor(textColor);}, false);
+		blockButton.addEventListener('input', function(e){getColor(e, 'block');}, false);
+		blockButton.addEventListener('focus', function(){setColor('block');}, false);
+
+		textButton.addEventListener('input', function(e){getColor(e, 'text');}, false);
+		textButton.addEventListener('focus', function(){setColor('text');}, false);
 
 		if (data.openTab === undefined){
 			data.openTab = false;
@@ -45,14 +51,15 @@ function init(){
 			document.body.style.backgroundImage = 'url(' + data.backgroundImg + ')';
 		}
 		if (data.backColor !== undefined) {
-			document.body.style.backgroundColor = data.backColor;
 			backColor = data.backColor;
-			backButton.value = data.backColor;
+			document.body.style.backgroundColor = backColor;
+			backButton.value = backColor;
 		}
 		if (data.blockColor !== undefined) {
-			document.getElementById('container').style.backgroundColor = data.blockColor;
 			blockColor = data.blockColor;
-			blockButton.value = data.blockColor;
+			document.getElementById('container').style.backgroundColor = 'rgba(' + blockColor.r + ',' + blockColor.b + ',' + blockColor.g + ',' + blockColor.a + ')';
+			blockButton.value = data.blockColor.hex;
+			slider.value = data.blockColor.a * 100;
 		}
 		if (data.textColor !== undefined){
 			document.body.style.color = data.textColor;
@@ -103,21 +110,52 @@ function clearBackground() {
 	});
 }
 
+function dimBlock(e){
+	blockColor.a = e.target.value / 100;
+	document.getElementById('container').style.backgroundColor = 'rgba(' + blockColor.r + ',' + blockColor.b + ',' + blockColor.g + ',' + blockColor.a + ')';
+}
+
+function getColor(e, color) {
+	if (color === 'block'){
+		blockColor = createColor(e.target.value, blockColor);
+		var style = 'rgba(' + blockColor.r + ',' + blockColor.b + ',' + blockColor.g + ',' + blockColor.a + ')';
+		document.getElementById('container').style.backgroundColor = style; 
+	} else if (color === 'back'){
+		document.body.style.backgroundColor = e.target.value;
+		backColor = e.target.value;
+	} else if (color === 'text'){
+		document.body.style.color = e.target.value;
+		textColor = e.target.value;
+	}
+}
+
 function setColor(color) {
 	chrome.storage.local.get(null, (data) => {
-		console.log(color);
-		console.log(blockColor);
-		console.log(' ');
-		if (color == blockColor){
-			document.getElementById('container').style.backgroundColor = color;
-			data.blockColor = color;
-		} else if (color == backColor){
-			document.body.style.backgroundColor = color;
-			data.backColor = color;
-		} else if (color == textColor){
-			document.body.style.color = color;
-			data.textColor = color;
+		if (color === 'block'){
+			document.getElementById('container').style.backgroundColor = blockColor;
+			data.blockColor = blockColor;
+		} else if (color === 'back'){
+			document.body.style.backgroundColor = backColor;
+			data.backColor = backColor;
+		} else if (color === 'text'){
+			document.body.style.color = textColor;
+			data.textColor = textColor;
 		}
 		chrome.storage.local.set(data);
 	});
+}
+
+
+function createColor(hex, color){
+	if (color === undefined){
+		color = {'hex': hex};
+	} else {
+		color.hex = hex;
+	}
+	var c = '0x' + hex.slice(1);
+	color.r = c >> 16 & 255;
+	color.b = c >> 8 & 255;
+	color.g = c & 255;
+
+	return color;
 }

@@ -93,7 +93,7 @@ function buildGroups(data){
 
 	for (var i = 0; i < data.groups.length; i++){
 		var group = data.groups[i];
-		var tab = createTab(group);
+		var tab = createTab(group, data.activeIndex === i);
 
 		var tabImage = createTabImage(group, data.activeIndex === i);
 		var title = createTabTitle(group, data.activeIndex === i);
@@ -139,8 +139,9 @@ function createAddTabButton(){
  * Creates an html tab for the group and adds the appropriate
  * listeners to drag, reorder, etc.
  */
-function createTab(group){
+function createTab(group, active){
 	var tab = document.createElement('div');
+//	tab.className = active ? 'activeTab' : 'tabButton';
 	tab.className = 'tabButton';
 	tab.id = group.id;
 	tab.draggable = true;
@@ -191,6 +192,7 @@ function createTabImage(group, active){
 	var tabImage = document.createElement('img');
 	tabImage.className = 'tabImage dragBlock';
 	tabImage.draggable = false;
+//	if (!active) tabImage.src = 'images/tabOff.png';
 	tabImage.src = active ? 'images/tabOn.png' : 'images/tabOff.png';
 	tabImage.addEventListener('click', function(){
 		switchGroup(group.id);
@@ -315,7 +317,12 @@ function buildPages(data){
 	var groupBox = document.getElementById('groupBox');
 	var rowLength = Math.floor((groupBox.offsetWidth - groupMargin) / tabWidth);
 	var rows = Math.ceil(data.groups.length / rowLength);
+
 	var pageBox = document.getElementById('pageBox');
+	if (data.blockColor !== undefined){
+		var color = 'rgba(' + data.blockColor.r + ',' + data.blockColor.b + ',' + data.blockColor.g + ',' + data.blockColor.a + ')';
+		pageBox.style.backgroundColor = color;
+	}
 
 	if (activeGroup.pageList.length > 0){
 		pageBox.style.removeProperty('height');

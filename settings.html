@@ -7,24 +7,26 @@
 <body>
 	<div id='container'>
 		<h1>Settings</h1>
-		<form action="/action_page.php">
-			<input type="checkbox" name="newTab" value="newTab" id="newTab"> New Tab<br>
-			<p>Every page opened from Viz Tab will be opened in a new tab.</p>
-			<input type="checkbox" name="overrideTab" value="overrideTab" id="overrideTab"> Override New Tab<br>
-			<p>Opening a new tab will open Viz Tab instead of your homepage.</p>
-		</form>
+		<input type="checkbox" name="newTab" value="newTab" id="newTab"> New Tab<br>
+		<p>Every page opened from Viz Tab will be opened in a new tab.</p>
+		<input type="checkbox" name="overrideTab" value="overrideTab" id="overrideTab"> Override New Tab<br>
+		<p>Opening a new tab will open Viz Tab instead of your homepage.</p>
+
 		<h3>Background Image</h3>
 		<input id='file-input' type='file' name='picker' /><br>
 		<button id='clear'>Clear Image</button><br>
 
-		<h3>Background Color</h3>
-		<input id='backColor' type='color' name='backColor'/><br>
+		<div id='colorContainer'>
+			<h3>Background Color</h3>
+			<input id='backColor' type='color' name='backColor'/><br>
 
-		<h3>Block Color</h3>
-		<input id='blockColor' type='color' name='blockColor'/><br>
+			<h3>Block Color</h3>
+			<input type="range" min="1" max="100"  id="slider">
+			<input id='blockColor' type='color' name='blockColor'/><br>
 
-		<h3>Text Color</h3>
-		<input id='textColor' type='color' name='textColor'/><br><br>
+			<h3>Text Color</h3>
+			<input id='textColor' type='color' name='textColor'/><br><br>
+		</div>
 
 		<a href='newTab.html'>Back to Viz Tab</a>
 	</div>

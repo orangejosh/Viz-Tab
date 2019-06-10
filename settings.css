@@ -12,11 +12,11 @@ body h1 {
 }
 
 #container {
-	width: 20%;
+	width: 30%;
 	margin: auto;
 	padding: 30;
-	background-color: lightgrey;
 	border-radius: 15px;
+	border-style: solid;
 }
 
 #container h1 {
@@ -26,17 +26,32 @@ body h1 {
 }
 
 #container h3 {
-	display: inline-block;
 	margin-top: 20;
 	margin-right: 20;
 }
 
-form {
-	margin-bottom: 40; 
+#colorContainer {
+	width: 60%;
 }
 
-form input {
-	margin-top: 30;
+#colorContainer h3 {
+	display: inline-block;
+}
+
+#blockColor, #backColor, #textColor {
+	float: right;
+	margin-top: 20;
+}
+
+#colorContainer button {
+/*  border: none; */
+/*  background-color: inherit;*/
+  cursor: pointer;
+  display: inline-block;
+}
+
+#slider {
+	width: 50px;
 }
 
 input {
