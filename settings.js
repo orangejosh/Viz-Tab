@@ -1,7 +1,7 @@
 
 
 var blockColor = createColor('#ffffff');
-var backColor = '#ffffff';
+var backColor = '#eae7b8';
 var textColor = '#ffffff';
 
 document.onload = init();
@@ -16,11 +16,13 @@ function init(){
 		var blockButton = document.getElementById("blockColor");
 		var slider = document.getElementById("slider");
 		var textButton = document.getElementById("textColor");
+		var resetButton = document.getElementById('resetButton');
 
 		newTabButton.addEventListener('change', saveNewTabSetting, false);
 		overrideButton.addEventListener('change', saveOverrideSetting, false);
 		pickButton.addEventListener('input', loadImage, false);
 		clearButton.addEventListener('click', clearBackground, false);
+		resetButton.addEventListener('click', resetSettings, false);
 
 		slider.addEventListener('input', dimBlock, false);
 		slider.addEventListener('mouseup', function(){chrome.storage.local.set({'blockColor': blockColor})}, false);
@@ -44,6 +46,7 @@ function init(){
 			document.body.style.backgroundImage = 'url(' + data.backgroundImg + ')';
 		}
 		if (data.backColor !== undefined) {
+			console.log(data.backColor);
 			backColor = data.backColor;
 			document.body.style.backgroundColor = backColor;
 			backButton.value = backColor;
@@ -127,12 +130,15 @@ function setColor(color) {
 		if (color === 'block'){
 			document.getElementById('container').style.backgroundColor = blockColor;
 			data.blockColor = blockColor;
+			console.log('BlockColor: ' + blockColor);
 		} else if (color === 'back'){
 			document.body.style.backgroundColor = backColor;
 			data.backColor = backColor;
+			console.log('BackColor: ' + backColor);
 		} else if (color === 'text'){
 			document.body.style.color = textColor;
 			data.textColor = textColor;
+			console.log('TextColor: ' + textColor);
 		}
 		chrome.storage.local.set(data);
 	});
@@ -150,5 +156,22 @@ function createColor(hex, color){
 	color.b = c >> 8 & 255;
 	color.g = c & 255;
 
+	console.log(color.hex);
+
 	return color;
+}
+
+function resetSettings(){
+	chrome.storage.local.remove([
+		'backColor', 
+		'backgroundImg', 
+		'blockColor', 
+		'groupToggle', 
+		'newTab', 
+		'openTab', 
+		'textColor', 
+		'toggle'
+	], function() {
+		location.reload();	
+	});
 }

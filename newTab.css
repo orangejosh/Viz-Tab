@@ -3,6 +3,7 @@ body {
 	margin:0;
 	background-position: center top;
 	background-size: cover;
+	background-color: #eae7b8;
 }
 
 .clear{
@@ -172,6 +173,7 @@ label input {
 		border: 2px solid lightgrey;
 		overflow: auto;
 		position: relative;
+		background-color: rgba(128, 232, 147, 0.32);
 	}
 
 	.pageBlock {
@@ -221,6 +223,7 @@ label input {
 		border: 2px solid lightgrey;
 		overflow: auto;
 		position: relative;
+		background-color: rgba(128, 232, 147, 0.32);
 	}
 
 	.pageBlock {
@@ -269,6 +272,7 @@ label input {
 		border: 2px solid lightgrey;
 		overflow: auto;
 		position: relative;
+		background-color: rgba(128, 232, 147, 0.32);
 	}
 
 	.pageBlock {
