@@ -1,8 +1,8 @@
 
 
-var blockColor = createColor('#ffffff');
-var backColor = '#eae7b8';
-var textColor = '#ffffff';
+var backColor = '#fcffd4';
+var textColor = '#000000';
+var blockColor = {'hex': '#a7dc83', 'r': 167, 'g': 220, 'b': 131, 'a': 0.5};
 
 document.onload = init();
 
@@ -20,48 +20,45 @@ function init(){
 
 		newTabButton.addEventListener('change', saveNewTabSetting, false);
 		overrideButton.addEventListener('change', saveOverrideSetting, false);
+
 		pickButton.addEventListener('input', loadImage, false);
 		clearButton.addEventListener('click', clearBackground, false);
-		resetButton.addEventListener('click', resetSettings, false);
+
+		backButton.addEventListener('input', function(e){getColor(e, backColor)}, false);
+		backButton.addEventListener('focus', function(){saveColor(backColor);}, false);
 
 		slider.addEventListener('input', dimBlock, false);
-		slider.addEventListener('mouseup', function(){chrome.storage.local.set({'blockColor': blockColor})}, false);
+		slider.addEventListener('mouseup', function(e){dimBlock; chrome.storage.local.set({'blockColor': blockColor})}, false);
 
-		backButton.addEventListener('input', function(e){getColor(e, 'back')}, false);
-		backButton.addEventListener('focus', function(){setColor('back');}, false);
+		blockButton.addEventListener('input', function(e){getColor(e, blockColor);}, false);
+		blockButton.addEventListener('focus', function(){saveColor(blockColor);}, false);
 
-		blockButton.addEventListener('input', function(e){getColor(e, 'block');}, false);
-		blockButton.addEventListener('focus', function(){setColor('block');}, false);
+		textButton.addEventListener('input', function(e){getColor(e, textColor);}, false);
+		textButton.addEventListener('focus', function(){saveColor(textColor);}, false);
 
-		textButton.addEventListener('input', function(e){getColor(e, 'text');}, false);
-		textButton.addEventListener('focus', function(){setColor('text');}, false);
+		resetButton.addEventListener('click', resetSettings, false);
 
-		if (data.openTab){
+		if (data.openTab)
 			newTabButton.checked = true;
-		}
-		if (data.newTab){
+		if (data.newTab)
 			overrideButton.checked = true;
-		}
-		if (data.backgroundImg !== undefined && data.backgroundImg !== null) {
+		if (data.backgroundImg !== undefined && data.backgroundImg !== null) 
 			document.body.style.backgroundImage = 'url(' + data.backgroundImg + ')';
-		}
-		if (data.backColor !== undefined) {
-			console.log(data.backColor);
+		if (data.backColor !== undefined) 
 			backColor = data.backColor;
-			document.body.style.backgroundColor = backColor;
-			backButton.value = backColor;
-		}
-		if (data.blockColor !== undefined) {
+		if (data.blockColor !== undefined) 
 			blockColor = data.blockColor;
-			document.getElementById('container').style.backgroundColor = 'rgba(' + blockColor.r + ',' + blockColor.b + ',' + blockColor.g + ',' + blockColor.a + ')';
-			blockButton.value = data.blockColor.hex;
-			slider.value = data.blockColor.a * 100;
-		}
-		if (data.textColor !== undefined){
-			document.body.style.color = data.textColor;
+		if (data.textColor !== undefined)
 			textColor = data.textColor;
-			textButton.value = data.textColor;
-		}
+
+		document.body.style.backgroundColor = backColor;
+		document.getElementById('container').style.backgroundColor = 'rgba(' + blockColor.r + ',' + blockColor.g + ',' + blockColor.b + ',' + blockColor.a + ')';
+		document.body.style.color = textColor;
+
+		backButton.value = backColor;
+		blockButton.value = blockColor.hex;
+		slider.value = blockColor.a * 100;
+		textButton.value = textColor;
 
 		chrome.storage.local.set(data);
 	})
@@ -108,57 +105,42 @@ function clearBackground() {
 
 function dimBlock(e){
 	blockColor.a = e.target.value / 100;
-	document.getElementById('container').style.backgroundColor = 'rgba(' + blockColor.r + ',' + blockColor.b + ',' + blockColor.g + ',' + blockColor.a + ')';
+	document.getElementById('container').style.backgroundColor = 'rgba(' + blockColor.r + ',' + blockColor.g + ',' + blockColor.b + ',' + blockColor.a + ')';
 }
 
 function getColor(e, color) {
-	if (color === 'block'){
-		blockColor = createColor(e.target.value, blockColor);
-		var style = 'rgba(' + blockColor.r + ',' + blockColor.b + ',' + blockColor.g + ',' + blockColor.a + ')';
+	if (color == blockColor){
+		var c = '0x' + e.target.value.slice(1);
+		color.r = c >> 16 & 255;
+		color.g = c >> 8 & 255;
+		color.b = c & 255;
+
+		var style = 'rgba(' + blockColor.r + ',' + blockColor.g + ',' + blockColor.b + ',' + blockColor.a + ')';
 		document.getElementById('container').style.backgroundColor = style; 
-	} else if (color === 'back'){
+	} else if (color == backColor){
 		document.body.style.backgroundColor = e.target.value;
 		backColor = e.target.value;
-	} else if (color === 'text'){
+	} else if (color == textColor){
 		document.body.style.color = e.target.value;
 		textColor = e.target.value;
 	}
 }
 
-function setColor(color) {
+function saveColor(color) {
 	chrome.storage.local.get(null, (data) => {
-		if (color === 'block'){
-			document.getElementById('container').style.backgroundColor = blockColor;
+		if (color == blockColor){
+			var style = 'rgba(' + blockColor.r + ',' + blockColor.g + ',' + blockColor.b + ',' + blockColor.a + ')';
+			document.getElementById('container').style.backgroundColor = style; 
 			data.blockColor = blockColor;
-			console.log('BlockColor: ' + blockColor);
-		} else if (color === 'back'){
+		} else if (color == backColor){
 			document.body.style.backgroundColor = backColor;
 			data.backColor = backColor;
-			console.log('BackColor: ' + backColor);
-		} else if (color === 'text'){
+		} else if (color === textColor){
 			document.body.style.color = textColor;
 			data.textColor = textColor;
-			console.log('TextColor: ' + textColor);
 		}
 		chrome.storage.local.set(data);
 	});
-}
-
-
-function createColor(hex, color){
-	if (color === undefined){
-		color = {'hex': hex};
-	} else {
-		color.hex = hex;
-	}
-	var c = '0x' + hex.slice(1);
-	color.r = c >> 16 & 255;
-	color.b = c >> 8 & 255;
-	color.g = c & 255;
-
-	console.log(color.hex);
-
-	return color;
 }
 
 function resetSettings(){
@@ -174,4 +156,11 @@ function resetSettings(){
 	], function() {
 		location.reload();	
 	});
+}
+
+function printColor(hex){
+	var c = '0x' + hex.slice(1);
+	console.log(c >> 16 & 255);
+	console.log(c >> 8 & 255);
+	console.log(c & 255);
 }

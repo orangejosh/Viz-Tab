@@ -320,7 +320,7 @@ function buildPages(data){
 
 	var pageBox = document.getElementById('pageBox');
 	if (data.blockColor !== undefined){
-		var color = 'rgba(' + data.blockColor.r + ',' + data.blockColor.b + ',' + data.blockColor.g + ',' + data.blockColor.a + ')';
+		var color = 'rgba(' + data.blockColor.r + ',' + data.blockColor.g + ',' + data.blockColor.b + ',' + data.blockColor.a + ')';
 		pageBox.style.backgroundColor = color;
 	}
 
