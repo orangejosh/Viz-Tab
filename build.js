@@ -93,7 +93,7 @@ function buildGroups(data){
 
 	for (var i = 0; i < data.groups.length; i++){
 		var group = data.groups[i];
-		var tab = createTab(group, data.activeIndex === i);
+		var tab = createTab(group, data.activeIndex === i, data.textColor);
 
 		var tabImage = createTabImage(group, data.activeIndex === i);
 		var title = createTabTitle(group, data.activeIndex === i);
@@ -139,7 +139,7 @@ function createAddTabButton(){
  * Creates an html tab for the group and adds the appropriate
  * listeners to drag, reorder, etc.
  */
-function createTab(group, active){
+function createTab(group, active, color){
 	var tab = document.createElement('div');
 //	tab.className = active ? 'activeTab' : 'tabButton';
 	tab.className = 'tabButton';
@@ -181,6 +181,22 @@ function createTab(group, active){
 	 		saveNewGroupOrder(dragTarget.id);
 		}
 	})
+
+	if (active){
+		var trap1 = document.createElement('div');
+		trap1.className = 'trapLn1';
+		trap1.style.background = color;
+		var trap2 = document.createElement('div');
+		trap2.className = 'trapLn2';
+		trap2.style.background = color;
+		var trap3 = document.createElement('div');
+		trap3.className = 'trapLn3';
+		trap3.style.background = color;
+
+		tab.appendChild(trap1);
+		trap1.appendChild(trap2);
+		trap1.appendChild(trap3);
+	}
 
 	return tab;	
 }
@@ -343,6 +359,9 @@ function buildPages(data){
 	}
 	if (data.backgroundImg != undefined){
 		document.body.style.backgroundImage = 'url(' + data.backgroundImg + ')';
+	}
+	if (data.textColor != undefined){
+		pageBox.style.borderColor = data.textColor;
 	}
 
 	createPages(activeGroup, data);

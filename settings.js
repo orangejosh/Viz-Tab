@@ -1,10 +1,11 @@
 
 
-var backColor = '#fcffd4';
+var backColor = '#FFF5D4';
 var textColor = '#000000';
 var blockColor = {'hex': '#a7dc83', 'r': 167, 'g': 220, 'b': 131, 'a': 0.5};
 
-document.onload = init();
+//document.onload = init();
+init();
 
 function init(){
 	chrome.storage.local.get(null, function(data){

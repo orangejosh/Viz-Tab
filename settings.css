@@ -65,3 +65,7 @@ input {
 p {
 	margin-top: 5;
 }
+
+#resetButton {
+	float: right;
+}

@@ -3,7 +3,7 @@ body {
 	margin:0;
 	background-position: center top;
 	background-size: cover;
-	background-color: #fcffd4;
+	background-color: #FFF5D4;
 }
 
 .clear{
@@ -164,7 +164,7 @@ label input {
 	}
 
 	#pageBox {
-		z-index: 0;
+		z-index: 2;
 		margin:auto;
 		padding-bottom: 15px;
 		width:80%;
@@ -215,7 +215,7 @@ label input {
 	}	
 
 	#pageBox {
-		z-index: 0;
+		z-index: 2;
 		margin:auto;
 		padding-bottom: 15px;
 		width:80%;
@@ -264,7 +264,7 @@ label input {
 	}
 
 	#pageBox {
-		z-index: 0;
+		z-index: 2;
 		margin:auto;
 		padding-bottom: 15px;
 		width:960px;
@@ -422,6 +422,40 @@ label input {
 	margin-left: 6.5%;
 	margin-right: 6.5%;
 	vertical-align: top;
+}
+
+
+.trapLn1 {
+	position: relative;
+	top: 3px;
+	left: 7px;
+	width: 130px;
+	height: 2px;
+	background: blue;
+}
+
+.trapLn2 {
+	position: relative;
+	top: 50px;
+	left: -13px;
+	width: 50px;
+	height: 2px;
+	background: blue;
+
+	-webkit-transform-origin: 0% 0%;
+	-webkit-transform: rotateZ(284deg);
+}
+
+.trapLn3 {
+	position: relative;
+	left: 131px;
+	top: -1px;
+	width: 48px;
+	height: 2px;
+	background: blue;
+
+	-webkit-transform-origin: 0% 0%;
+	-webkit-transform: rotateZ(76deg);
 }
 
 
