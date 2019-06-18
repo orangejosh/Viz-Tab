@@ -1,10 +1,9 @@
 
 
 var backColor = '#FFF5D4';
-var textColor = '#000000';
+var textColor = '#2F4F4F';
 var blockColor = {'hex': '#a7dc83', 'r': 167, 'g': 220, 'b': 131, 'a': 0.5};
 
-//document.onload = init();
 init();
 
 function init(){
@@ -54,7 +53,7 @@ function init(){
 
 		document.body.style.backgroundColor = backColor;
 		document.getElementById('container').style.backgroundColor = 'rgba(' + blockColor.r + ',' + blockColor.g + ',' + blockColor.b + ',' + blockColor.a + ')';
-		document.body.style.color = textColor;
+		document.getElementById('container').style.color = textColor; 
 
 		backButton.value = backColor;
 		blockButton.value = blockColor.hex;
@@ -122,7 +121,7 @@ function getColor(e, color) {
 		document.body.style.backgroundColor = e.target.value;
 		backColor = e.target.value;
 	} else if (color == textColor){
-		document.body.style.color = e.target.value;
+		document.getElementById('container').style.color = e.target.value; 
 		textColor = e.target.value;
 	}
 }

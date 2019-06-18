@@ -344,7 +344,7 @@ function buildPages(data){
 		pageBox.style.removeProperty('height');
 		createOpenAllButton(rows > 1);
 	} else {
-		pageBox.style.height = '400px';
+		pageBox.style.height = '164px';
 		var openAllButton = document.getElementById('openAll');
 		if (openAllButton !== null){
 			openAllButton.style.visibility = 'none';
@@ -561,17 +561,20 @@ function createOpenAllButton(expand){
 
 	var link = document.createElement('a');
 	link.id = 'openAll';
+	/*
 	if (expand === false){
 		link.style.top = '-23px';
 	}
+	*/
 	link.title = 'Open All Pages';
 	link.appendChild(button);
 
-	var groupBox = document.getElementById('groupBox');
+	var groupBox = document.getElementById('pageBox');
 	groupBox.appendChild(link);
 
 	link.addEventListener('click', openAllPages)
 }
+
 
 /**************Build Pages End ******************/
 
@@ -605,17 +608,21 @@ function toggleGroupRows() {
 
 	if (toggle === null){
 		pageBox.style.top = (rows - 1) * -7 + 'px';
+		/*
 		if (openButton != null){
 			openButton.style.top = (rows - 1) * 7 - 23 + 'px';
 		}
+		*/
 		return;
 	} else if (groupSwitch.checked){
 		toggle.style.background = 'url("images/downArrow.jpg") no-repeat';
 		pageBox.style.top = (rows - 1) * -7 + 'px';
 		toggle.style.top = (rows - 1) * 7 + 'px';
+		/*
 		if (openButton !== null){
 			openButton.style.top = (rows - 1) * 7 - 23 + 'px';
 		}
+		*/
 
 		for (var i = 0; i < tabs.length; i++){
 			if (i % rowLength === 0){
@@ -632,9 +639,11 @@ function toggleGroupRows() {
 		toggle.style.background = 'url("images/upArrow.jpg") no-repeat';
 		pageBox.style.top = (rows - 1) * -23 + 'px';
 		toggle.style.top = (rows - 1) * 23 + 'px';
+		/*
 		if (openButton !== null){
 			openButton.style.top = (rows - 1) * 23 - 23 + 'px';
 		}
+		*/
 
 		var firstRow = rows - 1;
 		for (var i = 0; i < tabs.length; i++){

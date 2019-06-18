@@ -125,11 +125,13 @@ function allignGroups(){
 				rows--;
 			}
 			var tab = tabs[i];
+			/*
 			if (toggle.groupToggle === true){
 				tab.style.top = rows * 7 - 2 + 'px';
 			} else {
 				tab.style.top = rows * 23 - 2 + 'px';
 			}
+			*/
 			tab.style.zIndex = rows;
 		}
 	})

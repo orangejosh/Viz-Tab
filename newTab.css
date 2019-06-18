@@ -15,7 +15,7 @@ body {
 	float:left;
 	margin-left: 20px;
 	padding-right: 15px;
-	border-right: thin solid lightgrey;
+	border-right: thin solid darkslategrey;
 }
 
 #donateButton {
@@ -25,7 +25,7 @@ body {
 }
 
 #menuBox a {
-	color: grey;
+	color: darkslategrey;
 	text-decoration: none;
 }
 
@@ -35,7 +35,7 @@ body {
 	margin: 0px;
 	padding-left: 0px;
 	padding-right: 15px;
-	border-right: thin solid lightgrey;
+	border-right: thin solid darkslategrey;
 }
 
 #menuList li {
@@ -44,7 +44,7 @@ body {
 }
 
 .activeTab {
-	border-bottom: 26px solid lightgray;
+	border-bottom: 26px solid darkslategrey;
 	border-left: 5px solid transparent;
 	border-right: 5px solid transparent;
 	border-top-left-radius: 10px;
@@ -120,7 +120,8 @@ body {
 
 #openAll {
 	position: absolute;
-	left: 25px;
+	right: 0;
+	margin: 15px;
 	width: 16px;
 	cursor: pointer;
 	pointer-events: all;
@@ -170,7 +171,7 @@ label input {
 		width:80%;
 /*		max-width: 1280px;*/
 		border-radius: 25px;
-		border: 2px solid lightgrey;
+		border: 2px solid darkslategray;
 		overflow: auto;
 		position: relative;
 		background-color: rgba(167, 220, 131, 0.5);
@@ -220,7 +221,7 @@ label input {
 		padding-bottom: 15px;
 		width:80%;
 		border-radius: 25px;
-		border: 2px solid lightgrey;
+		border: 2px solid darkslategray;
 		overflow: auto;
 		position: relative;
 		background-color: rgba(167, 220, 131, 0.5);
@@ -269,7 +270,7 @@ label input {
 		padding-bottom: 15px;
 		width:960px;
 		border-radius: 25px;
-		border: 2px solid lightgrey;
+		border: 2px solid darkslategray;
 		overflow: auto;
 		position: relative;
 		background-color: rgba(167, 220, 131, 0.5);
@@ -344,7 +345,7 @@ label input {
 .pageLink  {
 	margin: auto;
 	padding-top: 2px;
-	color: grey;
+	color: darkslategray;
 	cursor: pointer;
 	overflow: hidden;
 	white-space: nowrap;
@@ -431,7 +432,7 @@ label input {
 	left: 7px;
 	width: 130px;
 	height: 2px;
-	background: blue;
+	background: darkslategray;
 }
 
 .trapLn2 {
@@ -440,7 +441,7 @@ label input {
 	left: -13px;
 	width: 50px;
 	height: 2px;
-	background: blue;
+	background: darkslategray;
 
 	-webkit-transform-origin: 0% 0%;
 	-webkit-transform: rotateZ(284deg);
@@ -452,7 +453,7 @@ label input {
 	top: -1px;
 	width: 48px;
 	height: 2px;
-	background: blue;
+	background: darkslategray;
 
 	-webkit-transform-origin: 0% 0%;
 	-webkit-transform: rotateZ(76deg);
