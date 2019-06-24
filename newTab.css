@@ -54,7 +54,6 @@ body {
 	height: 0;
 	width: 144px;
 	position: relative;
-	transform: rotate(180deg);
 	text-decoration: none;
 	float: right;
 	pointer-events: all;
@@ -78,11 +77,9 @@ body {
 
 .tabButton {
 	position:relative;
-	overflow: hidden;
 	width: 144px;
 	text-decoration: none;
-	transform: rotate(180deg);
-	float: right;
+	float: left;
 	pointer-events: all;
 }
 
@@ -111,9 +108,9 @@ body {
 
 #expandToggle {
 	position: absolute;
+	bottom: 5px;
 	z-index: 3;
-	left: 25px;
-	background-size: 100% auto;
+	right: 25px;
 	cursor: pointer;
 	pointer-events: all;
 }
@@ -128,7 +125,6 @@ body {
 }
 
 #addButton {
-	float: right;
 	margin: 7px;
 	width: 10px;
 	cursor: pointer;
@@ -159,12 +155,11 @@ label input {
 		padding-right: 35px;
 		padding-left: 35px;
 		width:80%;
-		box-sizing: border-box;
-		transform: rotate(180deg);
 		pointer-events: none;
 	}
 
 	#pageBox {
+		display: block;
 		z-index: 2;
 		margin:auto;
 		padding-bottom: 15px;
@@ -173,7 +168,6 @@ label input {
 		border-radius: 25px;
 		border: 2px solid darkslategray;
 		overflow: auto;
-		position: relative;
 		background-color: rgba(167, 220, 131, 0.5);
 	}
 
@@ -211,11 +205,11 @@ label input {
 		padding-left: 35px;
 		width:80%;
 		box-sizing: border-box;
-		transform: rotate(180deg);
 		pointer-events: none;
 	}	
 
 	#pageBox {
+		display: block;
 		z-index: 2;
 		margin:auto;
 		padding-bottom: 15px;
@@ -223,7 +217,6 @@ label input {
 		border-radius: 25px;
 		border: 2px solid darkslategray;
 		overflow: auto;
-		position: relative;
 		background-color: rgba(167, 220, 131, 0.5);
 	}
 
@@ -260,11 +253,11 @@ label input {
 		padding-left: 35px;
 		width:960px;
 		box-sizing: border-box;
-		transform: rotate(180deg);
 		pointer-events: none;
 	}
 
 	#pageBox {
+		display: block;
 		z-index: 2;
 		margin:auto;
 		padding-bottom: 15px;
@@ -272,7 +265,6 @@ label input {
 		border-radius: 25px;
 		border: 2px solid darkslategray;
 		overflow: auto;
-		position: relative;
 		background-color: rgba(167, 220, 131, 0.5);
 	}
 
@@ -428,7 +420,7 @@ label input {
 
 .trapLn1 {
 	position: relative;
-	top: 3px;
+	top: 2px;
 	left: 7px;
 	width: 130px;
 	height: 2px;
@@ -437,21 +429,19 @@ label input {
 
 .trapLn2 {
 	position: relative;
-	top: 50px;
-	left: -13px;
-	width: 50px;
+	width: 29px;
 	height: 2px;
 	background: darkslategray;
 
 	-webkit-transform-origin: 0% 0%;
-	-webkit-transform: rotateZ(284deg);
+	-webkit-transform: rotateZ(105deg);
 }
 
 .trapLn3 {
 	position: relative;
 	left: 131px;
 	top: -1px;
-	width: 48px;
+	width: 27px;
 	height: 2px;
 	background: darkslategray;
 

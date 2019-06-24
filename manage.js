@@ -44,25 +44,7 @@ function switchGroup(id){
 		}
 
 		chrome.storage.local.set(data, function(){
-			var tabList = document.getElementsByClassName('tabButton');
-			for (var i = 0; i < tabList.length; i++){
-				var tab = tabList[i];
-				var name = tab.getElementsByClassName('tabTitle')[0].innerHTML;
-				if (activeGroup.name === name){
-					var img = tab.getElementsByClassName('tabImage')[0];
-					img.src = 'images/tabOn.png';
-					var title = tab.getElementsByClassName('tabTitle')[0];
-					title.style.color = 'black';				
-				} else {
-					var img = tab.getElementsByClassName('tabImage')[0];
-					img.src = 'images/tabOff.png';
-					var title = tab.getElementsByClassName('tabTitle')[0];
-					title.style.color = 'grey';							
-				}
-			}
-			clearPage();
-			buildPages(data);
-			toggleGroupRows();
+			//toggleGroupRows();
 			chrome.runtime.sendMessage({save: 'save'});
 			redrawPage(data);
 		})
@@ -425,5 +407,58 @@ function stopDragBlock(){
 	for (var i = 0; i < elem.length; i++){
 		elem[i].style.pointerEvents = 'visible';
 	}
+}
+
+/*
+ * If there are many rows of groups they can be collapsed so as to take less space.
+ */
+function toggleGroupRows() {
+	var groupBox = document.getElementById('groupBox');
+	var rowLength = Math.floor((groupBox.offsetWidth - groupMargin) / tabWidth);
+	var tabs = document.getElementsByClassName('tabButton');
+	var rows = Math.ceil(tabs.length / rowLength);
+
+	var groupSwitch = document.getElementById('groupSwitch')
+	var toggle = document.getElementById('expandToggle');
+	var pageBox = document.getElementById('pageBox');
+	var openButton = document.getElementById('openAll');
+
+	if (toggle === null){
+		return;
+	} else if (groupSwitch.checked){
+		toggle.style.background = 'url("images/downArrow.png") no-repeat';
+
+		for (var i = 0; i < tabs.length; i++){
+			if (i % rowLength === 0){
+				rows--;
+			}
+
+			for (var j = 0; j < tabs[i].children.length; j++){
+				tabs[i].children[j].hidden = false;
+			}
+		}
+		chrome.storage.local.set({'groupToggle': true});
+	} else {
+		toggle.style.background = 'url("images/upArrow.png") no-repeat';
+
+		var firstRow = rows - 1;
+		for (var i = 0; i < tabs.length; i++){
+			if (i % rowLength === 0){
+				rows--;
+			}
+			//tabs[i].style.top = rows * 23 - 2 + 'px';
+
+			if (rows !== firstRow){
+				var children = tabs[i].children;
+				for (var j = 0; j < children.length; j++){
+					if (!children[j].classList.contains('tabImage')){
+						children[j].hidden = true;
+					}
+				}
+			}
+		}
+		chrome.storage.local.set({'groupToggle': false});
+	}
+	toggle.style.backgroundSize = '100% auto';	
 }
 

@@ -10,7 +10,7 @@
 var groupMargin = 70;
 var tabWidth = 144;
 
-document.onload = init();
+window.onload = init();
 
 function init() {
 	// Builds the page
@@ -39,7 +39,6 @@ function init() {
 		})
 	})
 	document.body.appendChild(button);
-
 }
 
 
@@ -87,37 +86,48 @@ function buildGroups(data){
 	var rowLength = Math.floor((groupBox.offsetWidth - groupMargin) / tabWidth);
 	var rows = Math.ceil(data.groups.length / rowLength);
 
+	for (var i = rows - 1; i >= 0; i--){
+		var firstIndex = rowLength * i;
+		var lastIndex = data.groups.length - 1;
+		if (lastIndex > firstIndex + rowLength - 1){
+			lastIndex = firstIndex + rowLength - 1;
+		}
+
+		for (var j = firstIndex; j <= lastIndex; j++){
+			var group = data.groups[j];
+			var isActive = data.activeIndex === j;
+			var tab = createTab(group, isActive, data.textColor);
+
+			var tabImage = createTabImage(group, isActive);
+			var title = createTabTitle(group, isActive);
+			var input = createTabInput(group);
+			var closeButton = createTabClose(group);
+
+			tab.appendChild(tabImage);
+			tab.appendChild(title);
+			tab.appendChild(closeButton);
+			tab.appendChild(input);
+
+			groupBox.appendChild(tab);
+
+			tab.style.zIndex = i;
+		}
+
+		if (i == rows - 1){
+			var addButton = createAddTabButton();
+			groupBox.appendChild(addButton);
+		}
+
+		if (i > 0) {
+			var clear = document.createElement('div');
+			clear.className = 'clear';
+			groupBox.appendChild(clear);
+		}
+	}
+
 	if (rows > 1){
 		createTabExpandButton();
 	}
-
-	for (var i = 0; i < data.groups.length; i++){
-		var group = data.groups[i];
-		var tab = createTab(group, data.activeIndex === i, data.textColor);
-
-		var tabImage = createTabImage(group, data.activeIndex === i);
-		var title = createTabTitle(group, data.activeIndex === i);
-		var input = createTabInput(group);
-		var closeButton = createTabClose(group);
-
-		tab.appendChild(tabImage);
-		tab.appendChild(title);
-		tab.appendChild(closeButton);
-		tab.appendChild(input);
-
-		groupBox.appendChild(tab);
-
-		if (i % rowLength === 0){
-			rows--;
-		}
-		tab.style.top = rows * 7 - 2 + 'px';
-		tab.style.zIndex = rows;
-	}
-	if (data.groups.length > 0){
-		var addButton = createAddTabButton();
-		groupBox.appendChild(addButton);
-	}
-
 	var clear = document.createElement('div');
 	clear.className = 'clear';
 	groupBox.appendChild(clear);
@@ -141,7 +151,6 @@ function createAddTabButton(){
  */
 function createTab(group, active, color){
 	var tab = document.createElement('div');
-//	tab.className = active ? 'activeTab' : 'tabButton';
 	tab.className = 'tabButton';
 	tab.id = group.id;
 	tab.draggable = true;
@@ -196,6 +205,8 @@ function createTab(group, active, color){
 		tab.appendChild(trap1);
 		trap1.appendChild(trap2);
 		trap1.appendChild(trap3);
+	} else {
+		tab.style.top = '2px';
 	}
 
 	return tab;	
@@ -208,7 +219,6 @@ function createTabImage(group, active){
 	var tabImage = document.createElement('img');
 	tabImage.className = 'tabImage dragBlock';
 	tabImage.draggable = false;
-//	if (!active) tabImage.src = 'images/tabOff.png';
 	tabImage.src = active ? 'images/tabOn.png' : 'images/tabOff.png';
 	tabImage.addEventListener('click', function(){
 		switchGroup(group.id);
@@ -578,93 +588,6 @@ function createOpenAllButton(expand){
 
 /**************Build Pages End ******************/
 
-
-/*
-function getActiveGroup(data){
-	for (var i = 0; i < data.groups.length; i++){
-		var aGroup = data.groups[i];
-		if (aGroup.active == true){
-			return aGroup;
-		}
-	}
-	setActiveGroup(data.groups.length - 1, data);
-	return data.groups[data.groups.length - 1];
-}
-*/
-
-/*
- * If there are many rows of groups they can be collapsed so as to take less space.
- */
-function toggleGroupRows() {
-	var groupBox = document.getElementById('groupBox');
-	var rowLength = Math.floor((groupBox.offsetWidth - groupMargin) / tabWidth);
-	var tabs = document.getElementsByClassName('tabButton');
-	var rows = Math.ceil(tabs.length / rowLength);
-
-	var groupSwitch = document.getElementById('groupSwitch')
-	var toggle = document.getElementById('expandToggle');
-	var pageBox = document.getElementById('pageBox');
-	var openButton = document.getElementById('openAll');
-
-	if (toggle === null){
-		pageBox.style.top = (rows - 1) * -7 + 'px';
-		/*
-		if (openButton != null){
-			openButton.style.top = (rows - 1) * 7 - 23 + 'px';
-		}
-		*/
-		return;
-	} else if (groupSwitch.checked){
-		toggle.style.background = 'url("images/downArrow.jpg") no-repeat';
-		pageBox.style.top = (rows - 1) * -7 + 'px';
-		toggle.style.top = (rows - 1) * 7 + 'px';
-		/*
-		if (openButton !== null){
-			openButton.style.top = (rows - 1) * 7 - 23 + 'px';
-		}
-		*/
-
-		for (var i = 0; i < tabs.length; i++){
-			if (i % rowLength === 0){
-				rows--;
-			}
-
-			for (var j = 0; j < tabs[i].children.length; j++){
-				tabs[i].children[j].hidden = false;
-			}
-			tabs[i].style.top = rows * 7 - 2 + 'px';
-		}
-		chrome.storage.local.set({'groupToggle': true});
-	} else {
-		toggle.style.background = 'url("images/upArrow.jpg") no-repeat';
-		pageBox.style.top = (rows - 1) * -23 + 'px';
-		toggle.style.top = (rows - 1) * 23 + 'px';
-		/*
-		if (openButton !== null){
-			openButton.style.top = (rows - 1) * 23 - 23 + 'px';
-		}
-		*/
-
-		var firstRow = rows - 1;
-		for (var i = 0; i < tabs.length; i++){
-			if (i % rowLength === 0){
-				rows--;
-			}
-			tabs[i].style.top = rows * 23 - 2 + 'px';
-
-			if (rows !== firstRow){
-				var children = tabs[i].children;
-				for (var j = 0; j < children.length; j++){
-					if (!children[j].classList.contains('tabImage')){
-						children[j].hidden = true;
-					}
-				}
-			}
-		}
-		chrome.storage.local.set({'groupToggle': false});
-	}
-	toggle.style.backgroundSize = '100% auto';	
-}
 
 /*
  * Changes the active group depending on what arrow key is pressed
