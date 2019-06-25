@@ -148,11 +148,10 @@ label input {
 	}
 
 	#groupBox {
-		clear:both;
+		box-sizing: border-box;
 		position: relative;
 		z-index: 2;
 		margin:auto;
-		padding-right: 35px;
 		padding-left: 35px;
 		width:80%;
 		pointer-events: none;
@@ -198,11 +197,10 @@ label input {
 	}
 
 	#groupBox {
-		clear:both;
+		box-sizing: border-box;
 		position: relative;
 		z-index: 2;
 		margin:auto;
-		padding-right: 35px;
 		padding-left: 35px;
 		width:80%;
 		box-sizing: border-box;
@@ -247,11 +245,10 @@ label input {
 	}
 	
 	#groupBox {
-		clear:both;
+		box-sizing: border-box;
 		position: relative;
 		z-index: 2;
 		margin:auto;
-		padding-right: 35px;
 		padding-left: 35px;
 		width:960px;
 		box-sizing: border-box;
