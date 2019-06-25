@@ -9,6 +9,8 @@
  *
 /**************************************************************************/
 
+var GROUPMARGIN = 70;
+var TABWIDTH = 144;
 var dragTarget;
 
 chrome.runtime.onMessage.addListener(
@@ -22,7 +24,24 @@ chrome.runtime.onMessage.addListener(
 )
 
 function redrawPage(data){
-	clearURL();
+	// Clears the dynamic elements from the page
+	var help = document.getElementsByClassName('help');
+	var i = help.length - 1;
+	while (i >= 0){
+		help[i].parentNode.removeChild(help[i]);
+		i--;
+	}
+
+	var pageBox = document.getElementById('pageBox');
+	while(pageBox.hasChildNodes()) {
+		pageBox.removeChild(pageBox.lastChild);
+	}
+
+	var groupBox = document.getElementById('groupBox');
+	while(groupBox.hasChildNodes()) {
+		groupBox.removeChild(groupBox.lastChild);
+	}
+
 	buildGroups(data);
 	buildPages(data);
 }
@@ -30,16 +49,11 @@ function redrawPage(data){
 /****************** Manage Groups Start *******************/ 
 
 function switchGroup(id){
-	var activeGroup;
 	chrome.storage.local.get(null, function(data){
 		for (var i = 0; i < data.groups.length; i++){
-			var aGroup = data.groups[i];
-			if (aGroup.id === id){
-				if (data.activeIndex === i){
-					return;
-				}
+			if (data.groups[i].id === id){
 				data.activeIndex = i;
-				activeGroup = aGroup;
+				break;
 			}
 		}
 
@@ -78,29 +92,76 @@ function saveGroupName(name){
 }
 
 function reOrderGroups(event){
-	var box = document.getElementById('groupBox');
+	var groupBox = document.getElementById('groupBox');
+	var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
+	var tabList = document.getElementsByClassName('tabButton');
+	var lastClear = 0;
+	var nextClear = 0;
 
-	if (getTargetIndex(dragTarget, 'tabButton') > getTargetIndex(event.target, 'tabButton')){
-		box.insertBefore(dragTarget, event.target);
-		allignGroups();
-	} else {
-		box.insertBefore(dragTarget, event.target.nextSibling);
-		allignGroups();
+	groupBox.insertBefore(dragTarget, event.target.nextSibling);
+	var elem = dragTarget;
+	while(elem.previousSibling){
+		lastClear++;
+		elem = elem.previousSibling;
+		if (elem.className !== 'tabButton') break;
+	}
+	elem = dragTarget;
+	while(elem.nextSibling){
+		nextClear++;
+		elem = elem.nextSibling;
+		if (elem.className !== 'tabButton') break;
+	}
+
+	console.log(lastClear + nextClear);
+
+
+	var groupBox = document.getElementById('groupBox');
+	console.log(dragTarget);
+	console.log(event.target);
+	console.log('');
+	groupBox.insertBefore(dragTarget, event.target.nextSibling);
+
+	var addButton = document.getElementById('addButton');
+	var expandToggle = document.getElementById('expandToggle');
+
+	if (addButton !== null)
+		groupBox.removeChild(addButton);
+	if (expandToggle !== null)
+		groupBox.removeChild(expandToggle);
+
+	var lastElem = groupBox.lastChild;
+	var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
+	var rowCount = 0;
+	while (lastElem.previousSibling){
+		lastElem = lastElem.previousSibling;
+		if (lastElem.className === 'tabButton'){
+			rowCount++;
+		} else if (rowCount > 0 && rowCount < rowLength){
+			console.log('heere');
+			if (lastElem.className === 'clear'){
+				var prev = lastElem.previousSibling;
+				groupBox.removeChild(lastElem);
+				groupBox.insertBefore(lastElem, prev);
+				rowCount = 0;
+			}
+		} 
 	}
 }
 
 function allignGroups(){
 	chrome.storage.local.get('groupToggle', function(toggle){
 		var groupBox = document.getElementById('groupBox');
-		var rowLength = Math.floor((groupBox.offsetWidth - groupMargin) / tabWidth);
+		var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
 		var tabs = groupBox.getElementsByClassName('tabButton');
 		var rows = Math.ceil(tabs.length / rowLength);
 
+		/*
 		if (rows === 1){
 			var pageBox = document.getElementById('pageBox');
 			var openButton = document.getElementById('openAll');
 			pageBox.style.top ='0px';
 		}
+		*/
 
 		for (var i = 0; i < tabs.length; i++){
 			if (i % rowLength === 0){
@@ -119,31 +180,52 @@ function allignGroups(){
 	})
 }
 
-function saveNewGroupOrder(activeTabId){
+function saveNewGroupOrder(target){
+	var groupBox = document.getElementById('groupBox');
+	var rowCount = groupBox.getElementsByClassName('clear').length;
+	var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
+	var tabList = document.getElementsByClassName('tabButton');
+
 	chrome.storage.local.get(null, function(data){
-		var newGroupOrder= [];
+		var newGroupOrder = []; 
+		var topRowLength = rowLength - (rowCount * rowLength - tabList.length)
 
-		var tabList = document.getElementsByClassName('tabButton');
-		for (var i = 0; i < tabList.length; i++){
-			var tab = tabList[i];
-			var title = tab.getElementsByClassName('tabTitle')[0].innerHTML;
+		for (var i = rowCount - 1; i > 0; i--){
+			var startIndex = topRowLength + (i - 1) * rowLength;
+			var lastIndex = startIndex + rowLength - 1;
 
-			for (var k = 0; k < data.groups.length; k++){
-				var group = data.groups[k];
-				if (group.name === title){
-					newGroupOrder.push(group);
-					if (group.id === activeTabId){
-						data.activeIndex = i;
-					}
-					break;
+			for (var j = startIndex; j <= lastIndex; j++){
+				var group = getGroup(data, tabList[j]);
+				if (target.id === group.id){
+					data.activeIndex = newGroupOrder.length
 				}
+				newGroupOrder.push(group);
 			}
 		}
+
+		for (var i = 0; i < topRowLength; i++){
+			var group = getGroup(data, tabList[i]);
+			if (target.id === group.id){
+				data.activeIndex = newGroupOrder.length
+			}
+			newGroupOrder.push(group);
+		}
+
 		data.groups = newGroupOrder;
 		chrome.storage.local.set(data, function(){
 			chrome.runtime.sendMessage({save: 'save'});
 		});
 	});
+}
+
+function getGroup(data, tab){
+	var title = tab.getElementsByClassName('tabTitle')[0].innerHTML;
+
+	for (var i = 0; i < data.groups.length; i++){
+		if (data.groups[i].name === title){
+			return data.groups[i];
+		}
+	}
 }
 
 function closeGroup(groupName){
@@ -327,37 +409,6 @@ function openAllPages(){
 
 /****************** Manage Groups End *******************/
 
-function clearURL(){
-	var help = document.getElementsByClassName('help');
-	var i = help.length - 1;
-	while (i >= 0){
-		help[i].parentNode.removeChild(help[i]);
-		i--;
-	}
-
-	var pageBox = document.getElementById('pageBox');
-	while(pageBox.hasChildNodes()) {
-		pageBox.removeChild(pageBox.lastChild);
-	}
-
-	var groupBox = document.getElementById('groupBox');
-	while(groupBox.hasChildNodes()) {
-		groupBox.removeChild(groupBox.lastChild);
-	}
-}
-
-function clearPage(){
-	var pageBox = document.getElementById('pageBox');
-	while(pageBox.hasChildNodes()) {
-		pageBox.removeChild(pageBox.lastChild);
-	}
-
-	var openAll = document.getElementById('openAll');
-	if (openAll !== null){
-		openAll.parentNode.removeChild(openAll);
-	}
-}
-
 function checkSameName(name, list){
 	if (list === undefined || list.length === 0){
 		return name;
@@ -386,8 +437,7 @@ function getTargetIndex(target, elem){
 	var objs = document.getElementsByClassName(elem);
 
 	for (var i = 0; i < objs.length; i++){
-		var aObj = objs[i];
-		if (target === aObj){
+		if (target === objs[i]){
 			return i;
 		}
 	}
@@ -414,7 +464,7 @@ function stopDragBlock(){
  */
 function toggleGroupRows() {
 	var groupBox = document.getElementById('groupBox');
-	var rowLength = Math.floor((groupBox.offsetWidth - groupMargin) / tabWidth);
+	var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
 	var tabs = document.getElementsByClassName('tabButton');
 	var rows = Math.ceil(tabs.length / rowLength);
 

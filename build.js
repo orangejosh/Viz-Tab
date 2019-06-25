@@ -7,8 +7,6 @@
  *
 /**************************************************************************/
 
-var groupMargin = 70;
-var tabWidth = 144;
 
 window.onload = init();
 
@@ -83,7 +81,7 @@ function buildGroups(data){
 	}
 
 	var groupBox = document.getElementById('groupBox');
-	var rowLength = Math.floor((groupBox.offsetWidth - groupMargin) / tabWidth);
+	var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
 	var rows = Math.ceil(data.groups.length / rowLength);
 
 	for (var i = rows - 1; i >= 0; i--){
@@ -154,42 +152,8 @@ function createTab(group, active, color){
 	tab.className = 'tabButton';
 	tab.id = group.id;
 	tab.draggable = true;
-	tab.addEventListener('dragstart', function(event){
-		dragTarget = tab;
-		startDragBlock(event.target);
-	})
-	tab.addEventListener('dragenter', function(event){
-		if (dragTarget.className === 'tabButton' && event.target.className === 'tabButton'){
-			reOrderGroups(event);
-		} else if (dragTarget.className === 'pageBlock' && event.target.className === 'tabButton'){
-			var tabImg = event.target.getElementsByClassName('tabImage')[0];
-			tabImg.src = 'images/tabOver.png';
-		}
-	});
-	tab.addEventListener('dragleave', function(event){
-		if (dragTarget.className === 'pageBlock' && event.target.className === 'tabButton'){
-			var tabImg = event.target.getElementsByClassName('tabImage')[0];
-			//Need to check if the tab is active before deciding which image
-			tabImg.src = 'images/tabOff.png';
-		}
-	});
-	tab.addEventListener('dragend', function(event){
-		stopDragBlock();
-	});
 
-	tab.addEventListener('dragover', function(event){
-		event.preventDefault();
-	})
-
-	tab.addEventListener('drop', function(event){
-		if (dragTarget.className === 'pageBlock' && event.target.className === 'tabButton'){
-			var tabImg = event.target.getElementsByClassName('tabImage')[0];
-			tabImg.src = 'images/tabOn.png';
-			reGroupPage(dragTarget, event.target);
-		} else if (dragTarget.className === 'tabButton' && event.target.className === 'tabButton'){
-	 		saveNewGroupOrder(dragTarget.id);
-		}
-	})
+	addTabListeners(tab);
 
 	if (active){
 		var trap1 = document.createElement('div');
@@ -210,6 +174,50 @@ function createTab(group, active, color){
 	}
 
 	return tab;	
+}
+
+/**
+ * Adds listners to tabs to handle drag/drop, click etc.
+ */
+function addTabListeners(tab){
+	tab.addEventListener('dragstart', function(event){
+		dragTarget = tab;
+		startDragBlock(event.target);
+	})
+	tab.addEventListener('dragenter', function(event){
+		if (dragTarget.className === 'tabButton' && event.target.className === 'tabButton'){
+			reOrderGroups(event);
+		} else if (dragTarget.className === 'pageBlock' && event.target.className === 'tabButton'){
+			var tabImg = event.target.getElementsByClassName('tabImage')[0];
+			tabImg.src = 'images/tabOver.png';
+		}
+	});
+	
+	tab.addEventListener('dragleave', function(event){
+		if (dragTarget.className === 'pageBlock' && event.target.className === 'tabButton'){
+			var tabImg = event.target.getElementsByClassName('tabImage')[0];
+			//Need to check if the tab is active before deciding which image
+			tabImg.src = 'images/tabOff.png';
+		}
+	});
+
+	tab.addEventListener('dragend', function(event){
+		stopDragBlock();
+	});
+
+	tab.addEventListener('dragover', function(event){
+		event.preventDefault();
+	})
+
+	tab.addEventListener('drop', function(event){
+		if (dragTarget.className === 'pageBlock' && event.target.className === 'tabButton'){
+			var tabImg = event.target.getElementsByClassName('tabImage')[0];
+			tabImg.src = 'images/tabOn.png';
+			reGroupPage(dragTarget, event.target);
+		} else if (dragTarget.className === 'tabButton' && event.target.className === 'tabButton'){
+	 		saveNewGroupOrder(dragTarget);
+		}
+	})
 }
 
 /*
@@ -341,7 +349,7 @@ function buildPages(data){
 	}
 
 	var groupBox = document.getElementById('groupBox');
-	var rowLength = Math.floor((groupBox.offsetWidth - groupMargin) / tabWidth);
+	var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
 	var rows = Math.ceil(data.groups.length / rowLength);
 
 	var pageBox = document.getElementById('pageBox');
@@ -389,7 +397,6 @@ function buildPages(data){
 			pages[i].style.color = data.textColor;
 		}
 	}
-
 }
 
 /*
@@ -606,12 +613,12 @@ function keyPress(key){
 				switchIndex = i == 0 ? tabs.length - 1 : i - 1;	
 			} else if (key === 38){
 				var groupBox = document.getElementById('groupBox');
-				var rowLength = Math.floor((groupBox.offsetWidth - groupMargin) / tabWidth);
+				var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
 				switchIndex = i + rowLength > tabs.length - 1 ? tabs.length - 1 : i + rowLength;
 
 			} else if (key === 40) {
 				var groupBox = document.getElementById('groupBox');
-				var rowLength = Math.floor((groupBox.offsetWidth - groupMargin) / tabWidth);
+				var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
 				switchIndex = i - rowLength < 0 ? 0 : i - rowLength;
 			}
 			switchGroup(tabs[switchIndex].id);

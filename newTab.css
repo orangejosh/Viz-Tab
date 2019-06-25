@@ -110,7 +110,7 @@ body {
 	position: absolute;
 	bottom: 5px;
 	z-index: 3;
-	right: 25px;
+	right: 15px;
 	cursor: pointer;
 	pointer-events: all;
 }
@@ -125,7 +125,7 @@ body {
 }
 
 #addButton {
-	margin: 7px;
+	margin: 9px;
 	width: 10px;
 	cursor: pointer;
 	pointer-events: all;
@@ -159,6 +159,7 @@ label input {
 	}
 
 	#pageBox {
+		position: relative;
 		display: block;
 		z-index: 2;
 		margin:auto;
@@ -209,6 +210,7 @@ label input {
 	}	
 
 	#pageBox {
+		position: relative;
 		display: block;
 		z-index: 2;
 		margin:auto;
@@ -257,6 +259,7 @@ label input {
 	}
 
 	#pageBox {
+		position: relative;
 		display: block;
 		z-index: 2;
 		margin:auto;
