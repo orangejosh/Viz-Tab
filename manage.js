@@ -95,31 +95,16 @@ function reOrderGroups(event){
 	var groupBox = document.getElementById('groupBox');
 	var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
 	var tabList = document.getElementsByClassName('tabButton');
-	var lastClear = 0;
-	var nextClear = 0;
 
-	groupBox.insertBefore(dragTarget, event.target.nextSibling);
-	var elem = dragTarget;
-	while(elem.previousSibling){
-		lastClear++;
-		elem = elem.previousSibling;
-		if (elem.className !== 'tabButton') break;
-	}
-	elem = dragTarget;
-	while(elem.nextSibling){
-		nextClear++;
-		elem = elem.nextSibling;
-		if (elem.className !== 'tabButton') break;
+	if (dragTarget.id === event.target.id){
+		return;
 	}
 
-	console.log(lastClear + nextClear);
-
-
-	var groupBox = document.getElementById('groupBox');
-	console.log(dragTarget);
-	console.log(event.target);
-	console.log('');
-	groupBox.insertBefore(dragTarget, event.target.nextSibling);
+	if (dragTarget === event.target.nextSibling){
+		groupBox.insertBefore(dragTarget, event.target);
+	} else {
+		groupBox.insertBefore(dragTarget, event.target.nextSibling);
+	}
 
 	var addButton = document.getElementById('addButton');
 	var expandToggle = document.getElementById('expandToggle');
@@ -129,55 +114,27 @@ function reOrderGroups(event){
 	if (expandToggle !== null)
 		groupBox.removeChild(expandToggle);
 
-	var lastElem = groupBox.lastChild;
-	var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
-	var rowCount = 0;
-	while (lastElem.previousSibling){
-		lastElem = lastElem.previousSibling;
-		if (lastElem.className === 'tabButton'){
-			rowCount++;
-		} else if (rowCount > 0 && rowCount < rowLength){
-			console.log('heere');
-			if (lastElem.className === 'clear'){
-				var prev = lastElem.previousSibling;
-				groupBox.removeChild(lastElem);
-				groupBox.insertBefore(lastElem, prev);
-				rowCount = 0;
-			}
-		} 
+	var clears = groupBox.getElementsByClassName('clear');
+	while(clears.length > 0){
+		groupBox.removeChild(clears[0]);
 	}
-}
 
-function allignGroups(){
-	chrome.storage.local.get('groupToggle', function(toggle){
-		var groupBox = document.getElementById('groupBox');
-		var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
-		var tabs = groupBox.getElementsByClassName('tabButton');
-		var rows = Math.ceil(tabs.length / rowLength);
-
-		/*
-		if (rows === 1){
-			var pageBox = document.getElementById('pageBox');
-			var openButton = document.getElementById('openAll');
-			pageBox.style.top ='0px';
+	var rowCount = 0;
+	var element = groupBox.lastChild;
+	while (element.previousSibling){
+		if (element.className === 'tabButton'){
+			rowCount++;
 		}
-		*/
 
-		for (var i = 0; i < tabs.length; i++){
-			if (i % rowLength === 0){
-				rows--;
-			}
-			var tab = tabs[i];
-			/*
-			if (toggle.groupToggle === true){
-				tab.style.top = rows * 7 - 2 + 'px';
-			} else {
-				tab.style.top = rows * 23 - 2 + 'px';
-			}
-			*/
-			tab.style.zIndex = rows;
+		if (rowCount === rowLength){
+			var clear = document.createElement('div');
+			clear.className = 'clear';
+			groupBox.insertBefore(clear, element);
+			rowCount = 0;
 		}
-	})
+		
+		element = element.previousSibling;
+	} 
 }
 
 function saveNewGroupOrder(target){
