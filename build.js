@@ -170,7 +170,7 @@ function createTab(group, active, color){
 		trap1.appendChild(trap2);
 		trap1.appendChild(trap3);
 	} else {
-		tab.style.top = '2px';
+//		tab.style.top = '2px';
 	}
 
 	return tab;	

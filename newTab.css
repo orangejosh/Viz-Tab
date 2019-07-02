@@ -203,7 +203,6 @@ label input {
 		margin:auto;
 		padding-left: 35px;
 		width:80%;
-		box-sizing: border-box;
 		pointer-events: none;
 	}	
 
@@ -251,7 +250,6 @@ label input {
 		margin:auto;
 		padding-left: 35px;
 		width:960px;
-		box-sizing: border-box;
 		pointer-events: none;
 	}
 
@@ -429,7 +427,7 @@ label input {
 
 .trapLn2 {
 	position: relative;
-	width: 29px;
+	width: 27px;
 	height: 2px;
 	background: darkslategray;
 
@@ -441,7 +439,7 @@ label input {
 	position: relative;
 	left: 131px;
 	top: -1px;
-	width: 27px;
+	width: 26px;
 	height: 2px;
 	background: darkslategray;
 
