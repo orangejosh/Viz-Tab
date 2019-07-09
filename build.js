@@ -108,7 +108,7 @@ function buildGroups(data){
 
 			groupBox.appendChild(tab);
 
-			tab.style.zIndex = i;
+			tab.style.zIndex = rows - i;
 		}
 
 		if (i == rows - 1){

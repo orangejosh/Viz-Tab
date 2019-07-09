@@ -264,6 +264,7 @@ function reGroupPage(page, target) {
  */
 function toggleGroupRows() {
 	var groupBox = document.getElementById('groupBox');
+	var pageBox = document.getElementById('pageBox');
 	var toggle = document.getElementById('expandToggle');
 	var toggleInput = document.getElementById('groupSwitch');
 	var tabs = document.getElementsByClassName('tabButton');
@@ -274,6 +275,8 @@ function toggleGroupRows() {
 	} else if (toggleInput.checked){
 		toggle.style.background = 'url("images/downArrow.png") no-repeat';
 		addButton.style.display = 'initial';
+		groupBox.style.top = 0;
+		pageBox.style.top = 0;
 
 		for (var i = 0; i < tabs.length; i++){
 			tabs[i].style.top = 0;
@@ -304,6 +307,8 @@ function toggleGroupRows() {
 				}
 			}
 		}
+		groupBox.style.top = clearCount * 20 * -1;
+		pageBox.style.top = clearCount * 20 * -1;
 		chrome.storage.local.set({'groupToggle': false});
 	}
 	toggle.style.backgroundSize = '100% auto';	
