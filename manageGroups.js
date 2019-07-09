@@ -264,25 +264,19 @@ function reGroupPage(page, target) {
  */
 function toggleGroupRows() {
 	var groupBox = document.getElementById('groupBox');
-	var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
-	var tabs = document.getElementsByClassName('tabButton');
-	var rows = Math.ceil(tabs.length / rowLength);
-
-	var groupSwitch = document.getElementById('groupSwitch')
 	var toggle = document.getElementById('expandToggle');
-	var pageBox = document.getElementById('pageBox');
-	var openButton = document.getElementById('openAll');
+	var toggleInput = document.getElementById('groupSwitch');
+	var tabs = document.getElementsByClassName('tabButton');
+	var addButton = document.getElementById('addButton');
 
 	if (toggle === null){
 		return;
-	} else if (groupSwitch.checked){
+	} else if (toggleInput.checked){
 		toggle.style.background = 'url("images/downArrow.png") no-repeat';
+		addButton.style.display = 'initial';
 
 		for (var i = 0; i < tabs.length; i++){
-			if (i % rowLength === 0){
-				rows--;
-			}
-
+			tabs[i].style.top = 0;
 			for (var j = 0; j < tabs[i].children.length; j++){
 				tabs[i].children[j].hidden = false;
 			}
@@ -290,16 +284,19 @@ function toggleGroupRows() {
 		chrome.storage.local.set({'groupToggle': true});
 	} else {
 		toggle.style.background = 'url("images/upArrow.png") no-repeat';
+		addButton.style.display = 'none';
 
-		var firstRow = rows - 1;
-		for (var i = 0; i < tabs.length; i++){
-			if (i % rowLength === 0){
-				rows--;
+		var element = groupBox.lastChild;
+		var clearCount = 0;
+		var firstRow = true;
+		while (element.previousSibling){
+			element = element.previousSibling;
+			if (element.className === 'clear'){
+				clearCount++;
 			}
-			//tabs[i].style.top = rows * 23 - 2 + 'px';
-
-			if (rows !== firstRow){
-				var children = tabs[i].children;
+			if (clearCount > 0 && element.className === 'tabButton'){
+				element.style.top = clearCount * 20;
+				var children = element.children;
 				for (var j = 0; j < children.length; j++){
 					if (!children[j].classList.contains('tabImage')){
 						children[j].hidden = true;
