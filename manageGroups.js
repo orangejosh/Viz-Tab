@@ -4,8 +4,12 @@ function switchGroup(id){
 	chrome.storage.local.get(null, function(data){
 		for (var i = 0; i < data.groups.length; i++){
 			if (data.groups[i].id === id){
-				data.activeIndex = i;
-				break;
+				if (data.activeIndex === i){
+					return;
+				} else {
+					data.activeIndex = i;
+					break;
+				}
 			}
 		}
 
@@ -26,7 +30,6 @@ function renameGroup(groupName){
 			var input = tab.getElementsByClassName('tabTitleInput')[0];
 			input.style.visibility = 'visible';
 			input.focus();
-
 			return;
 		}
 	}
@@ -43,107 +46,92 @@ function saveGroupName(name){
 	});
 }
 
-function reOrderGroups(event){
+function moveGroup(event){
+	if (dragTarget.id === event.target.id) return;
+
 	var groupBox = document.getElementById('groupBox');
+	var element = groupBox.firstChild;
+	var sameRow = true;
+	var firstElem;
 
-	if (dragTarget.id === event.target.id){
-		return;
-	}
+	while (element.nextSibling){
+		var targetElement = element.id === dragTarget.id || element.id === event.target.id;
 
-	var targetCheck = false;
-	var clearCheck = false;
-	var element = event.target;
-	while (element.previousSibling){
-		element = element.previousSibling;
-
-		if (element.className === 'clear')
-			clearCheck = true;
-		if (element.id === dragTarget.id){
-			if (clearCheck === false){
-				break;
-			}
-			targetCheck = true;
+		if (firstElem === undefined && targetElement){
+			firstElem = element;
+		} else if (targetElement){
+			break;
+		} else if (firstElem !== undefined && element.className === 'clear'){
+			sameRow = false;
+			break;
 		}
+		element = element.nextSibling;
 	}
 
-	if (dragTarget === event.target.nextSibling || (targetCheck && clearCheck)){
+	var overRowTop = firstElem === event.target;
+
+	if ((sameRow && overRowTop) || (!sameRow && !overRowTop)){
 		groupBox.insertBefore(dragTarget, event.target);
 	} else {
 		groupBox.insertBefore(dragTarget, event.target.nextSibling);
 	}
 
-	var addButton = document.getElementById('addButton');
-	if (addButton)
-		groupBox.removeChild(addButton);
-
-	var expandToggle = document.getElementById('expandToggle');
-	if (expandToggle)
-		groupBox.removeChild(expandToggle);
-
-	alignRows(groupBox);
-	groupBox.appendChild(expandToggle);
+	if (!sameRow){
+		orderRows(groupBox, overRowTop);
+	}
 }
 
-function alignRows(groupBox){
-	var groupNodes = groupBox.childNodes;
+function orderRows(groupBox, overRowTop){
 	var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
-	var counts = getWrongRows(groupBox, rowLength);
-	var total = groupBox.childElementCount;
-	var over = total - counts[0];
-	var under = total - counts[1];
-
-	while (over < (under - 1)){
-		var switchTab = groupNodes[over];
-		while (groupNodes[over].className !== 'clear'){
-			over++;
-		}
-		over++;
-		var last = over;
-		while (groupNodes[last].className !== 'clear'){
-			last++;
-		}
-		groupBox.removeChild(switchTab);
-		groupBox.insertBefore(switchTab, groupNodes[last - 1]);
-		over--;
-	}
-	while (over > under){
-		var last = over;
-		while (groupNodes[last].className !== 'clear'){
-			last++;
-		}
-		var switchTab = groupNodes[last - 1];
-		over -= 2;
-		while(groupNodes[over] && groupNodes[over].className !== 'clear'){
-			over--;
-		}
-		over++;
-		groupBox.insertBefore(switchTab, groupNodes[over]);
-	}
-}
-
-function getWrongRows (groupBox, rowLength){
 	var element = groupBox.lastChild;
-	var under;
-	var over;
-	var i = 1;
+	var rowTail;
 	var count = 0;
 
 	while (element.previousSibling){
-		if (element.previousSibling.className === 'tabButton'){
+		if (element.className === 'tabButton'){
+			if (count === 0) rowTail = element;
 			count++;
-		} else if (count > 0){
-			over = count > rowLength ? i : over;
-			under = count < rowLength ? i : under;
+		} else if (count > 0 && count < rowLength) {
+			pullNextRow(groupBox, element, rowTail);
 			count = 0;
-		} 
+		} else if (count > 0 && count > rowLength){
+			pushNextRow(groupBox, rowTail, element);
+			count = 0;
+		} else {
+			count = 0;
+		}
 		element = element.previousSibling;
-		i++;
 	}
-	if (count > 0){
-		over = over === undefined ? i : over;
-		under = under === undefined ? i : under;
+}
+
+function pullNextRow(groupBox, pullElement, rowTail){
+	while (pullElement.className !== 'tabButton'){
+		pullElement = pullElement.previousSibling;
 	}
-	return [over, under];
+	while (pullElement.className === 'tabButton' && pullElement.previousSibling){
+		pullElement = pullElement.previousSibling;
+	}
+	if (pullElement.previousSibling){
+		pullElement = pullElement.nextSibling;
+	}
+	groupBox.removeChild(pullElement);
+	groupBox.insertBefore(pullElement, rowTail.nextSibling);
+
+}
+
+function pushNextRow(groupBox, pullElement, rowHead){
+	while (rowHead.className !== 'tabButton' && rowHead.previousSibling){
+		rowHead = rowHead.previousSibling;
+	}
+	while (rowHead.className === 'tabButton' && rowHead.previousSibling){
+		rowHead = rowHead.previousSibling;
+	}
+
+	if (rowHead.previousSibling){
+		rowHead = rowHead.nextSibling;
+	}
+	groupBox.removeChild(pullElement);
+	groupBox.insertBefore(pullElement, rowHead);
 }
 
 function saveNewGroupOrder(target){

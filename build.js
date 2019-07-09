@@ -186,7 +186,8 @@ function addTabListeners(tab){
 	})
 	tab.addEventListener('dragenter', function(event){
 		if (dragTarget.className === 'tabButton' && event.target.className === 'tabButton'){
-			reOrderGroups(event);
+			moveGroup(event);
+//			reOrderGroups(event);
 		} else if (dragTarget.className === 'pageBlock' && event.target.className === 'tabButton'){
 			var tabImg = event.target.getElementsByClassName('tabImage')[0];
 			tabImg.src = 'images/tabOver.png';
