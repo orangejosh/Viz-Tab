@@ -600,31 +600,35 @@ function createOpenAllButton(expand){
  * Changes the active group depending on what arrow key is pressed
  */
 function keyPress(key){
-	var tabs = document.getElementsByClassName('tabButton');
-	for (var i = 0; i < tabs.length; i++){
-		var imgPath = tabs[i].getElementsByClassName('tabImage')[0].src;
-		var pathList = imgPath.split('/');
-		var img = pathList[pathList.length - 1];
-		if (img === 'tabOn.png'){
-			var switchIndex;
-			if (key === 39){
-				switchIndex = i === tabs.length - 1 ? 0 : i + 1;				
-			} else if (key === 37){
-				switchIndex = i == 0 ? tabs.length - 1 : i - 1;	
-			} else if (key === 38){
-				var groupBox = document.getElementById('groupBox');
-				var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
-				switchIndex = i + rowLength > tabs.length - 1 ? tabs.length - 1 : i + rowLength;
+	chrome.storage.local.get(null, function(data){
+		if (key === 39){
+			data.activeIndex++;
+		} else if (key === 37){
+			data.activeIndex--;
+		} else if (key === 38){
+			var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
+			data.activeIndex = data.activeIndex + rowLength;
 
-			} else if (key === 40) {
-				var groupBox = document.getElementById('groupBox');
-				var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
-				switchIndex = i - rowLength < 0 ? 0 : i - rowLength;
+			if (data.activeIndex > data.groups.length) {
+				data.activeIndex = 0;
 			}
-			switchGroup(tabs[switchIndex].id);
-			return;
+		} else if (key === 40) {
+			var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
+			data.activeIndex = data.activeIndex - rowLength;
+
+			if (data.activeIndex < 0) {
+				data.activeIndex = data.groups.length - 1;
+			}
 		}
-	}	
+		var tabs = document.getElementsByClassName('tabButton');
+		for (i in tabs){
+			if (data.groups[data.activeIndex].id === tabs[i].id){
+				switchGroup(tabs[i].id);
+				break;
+			}
+		}
+		chrome.storage.local.set(data);
+	});
 }
 
 /*

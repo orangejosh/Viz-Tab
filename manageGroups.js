@@ -46,6 +46,10 @@ function saveGroupName(name){
 	});
 }
 
+
+/**************************************************************
+ * Begin: Reorder Groups
+ **************************************************************/
 function moveGroup(event){
 	if (dragTarget.id === event.target.id) return;
 
@@ -171,6 +175,10 @@ function saveNewGroupOrder(target){
 		});
 	});
 }
+/**************************************************************
+ * End: Reorder Groups
+ **************************************************************/
+
 
 function getGroup(data, tab){
 	var title = tab.getElementsByClassName('tabTitle')[0].innerHTML;
