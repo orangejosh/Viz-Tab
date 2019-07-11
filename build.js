@@ -601,24 +601,19 @@ function createOpenAllButton(expand){
  */
 function keyPress(key){
 	chrome.storage.local.get(null, function(data){
+		var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
 		if (key === 39){
 			data.activeIndex++;
 		} else if (key === 37){
 			data.activeIndex--;
 		} else if (key === 38){
-			var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
 			data.activeIndex = data.activeIndex + rowLength;
-
-			if (data.activeIndex > data.groups.length) {
-				data.activeIndex = 0;
-			}
 		} else if (key === 40) {
-			var rowLength = Math.floor((groupBox.offsetWidth - GROUPMARGIN) / TABWIDTH);
 			data.activeIndex = data.activeIndex - rowLength;
+		}
 
-			if (data.activeIndex < 0) {
-				data.activeIndex = data.groups.length - 1;
-			}
+		if (data.activeIndex > data.groups.length - 1 || data.activeIndex < 0){
+			return;
 		}
 		var tabs = document.getElementsByClassName('tabButton');
 		for (i in tabs){
