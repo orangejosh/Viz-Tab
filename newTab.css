@@ -125,7 +125,7 @@ body {
 }
 
 #addButton {
-	margin: 9px;
+	margin: 8px;
 	width: 10px;
 	cursor: pointer;
 	pointer-events: all;
@@ -417,8 +417,7 @@ label input {
 
 
 .trapLn1 {
-	position: relative;
-	top: 2px;
+	position: absolute;
 	left: 7px;
 	width: 130px;
 	height: 2px;
@@ -438,7 +437,7 @@ label input {
 .trapLn3 {
 	position: relative;
 	left: 131px;
-	top: -1px;
+	top: -2px;
 	width: 26px;
 	height: 2px;
 	background: darkslategray;
