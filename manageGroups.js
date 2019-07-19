@@ -309,7 +309,7 @@ function toggleGroupRows() {
 				element.style.top = clearCount * 20;
 				var children = element.children;
 				for (var j = 0; j < children.length; j++){
-					if (!children[j].classList.contains('tabImage')){
+					if (!children[j].classList.contains('tabImage') && !children[j].classList.contains('trapLn1')){
 						children[j].hidden = true;
 					}
 				}

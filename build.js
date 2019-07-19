@@ -94,7 +94,9 @@ function buildGroups(data){
 		for (var j = firstIndex; j <= lastIndex; j++){
 			var group = data.groups[j];
 			var isActive = data.activeIndex === j;
+			
 			var tab = createTab(group, isActive, data.textColor);
+			isActive = data.activeIndex == j && (data.groupToggle || i == 0);
 
 			var tabImage = createTabImage(group, isActive);
 			var title = createTabTitle(group, isActive);
@@ -574,7 +576,7 @@ function setImageDims(image, preview) {
  */
 function createOpenAllButton(expand){
 	var button = document.createElement('img');
-	button.src = 'images/expand.jpg';
+	button.src = 'images/expand.png';
 
 	var link = document.createElement('a');
 	link.id = 'openAll';

@@ -54,6 +54,8 @@ function createHelpPage(groupList){
 	pageScreen.id = 'screen';
 	redrawPage(groupList);
 	document.body.insertBefore(pageScreen, document.body.firstChild);
+	var groupBox = document.getElementById('groupBox');
+	groupBox.style.top = 0;
 
 	pageScreen.addEventListener('click', function(){
 		document.body.removeChild(pageScreen);
@@ -63,6 +65,7 @@ function createHelpPage(groupList){
 	})
 
 	var pageBox = document.getElementById('pageBox');
+	pageBox.style.top = 0;
 
 	var clickImg = document.createElement('img');
 	clickImg.src = '/images/click.png';
@@ -90,7 +93,6 @@ function createHelpPage(groupList){
 	dragDiv.appendChild(dragImg);
 	dragDiv.appendChild(navImg);
 
-	var pageBox = document.getElementById('pageBox');
 	pageBox.parentNode.insertBefore(dragDiv, pageBox.nextSibling);
 }
 
