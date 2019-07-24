@@ -297,7 +297,7 @@ function sendRedraw(){
 }
 
 /*
- * Along with moveImage(), updateOldVersion() converts the data
+ * Along with moveImage() and getActive(), updateOldVersion() converts the data
  * structure from the old version to the new.
  */
 function updateOldVersion(){
@@ -307,12 +307,7 @@ function updateOldVersion(){
 			return;
 		}
 
-		var newData = {
-			groups: undefined,
-			newTab: undefined,
-			toggle: undefined,
-			groupToggle: undefined
-		}
+		var newData = {};
 
 		for (key in data){
 			if (key === 'groupList'){
@@ -330,15 +325,18 @@ function updateOldVersion(){
 			}
 		}
 		for (key in lostGroups){
-			var groupObj = lostGroups[key];
-			var groupID = Object.keys(groupObj)[0];
-			var group = groupObj[groupID];
+			var group = lostGroups[key]
+			var groupID = Object.keys(group)[0];
+			group = group[groupID];
+
 			for (page in group){
 				var url = group[page].url;
 				var img = group[page].img;
 				moveImage(newData, groupID, url, img);
 			}
 		}
+
+		newData.activeIndex = getActive(data.groupList);
 
 		chrome.storage.local.clear(function(){
 			chrome.storage.local.set(newData);
@@ -357,4 +355,13 @@ function moveImage(newData, groupID, url, img){
 			}
 		}
 	}
+}
+
+function getActive(groups){
+	for (i in groups){
+		if (groups[i].active){
+			return parseInt(i);
+		}
+	}
+	return 0;
 }
